@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
-import { RouteRecordRaw } from 'vue-router';
+// La ligne "import { RouteRecordRaw } from 'vue-router';" a été supprimée
 import TabsPage from '../views/TabsPage.vue'
 
-const routes: Array<RouteRecordRaw> = [
+const routes = [ // ": Array<RouteRecordRaw>" a été supprimé ici
   {
     path: '/',
     redirect: '/tabs/tab1'
