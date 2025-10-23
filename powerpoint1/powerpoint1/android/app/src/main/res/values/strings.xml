@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">powerpoint1</string>
+    <string name="title_activity_main">powerpoint1</string>
+    <string name="package_name">ionic.powerpoint1</string>
+    <string name="custom_url_scheme">ionic.powerpoint1</string>
+</resources>
