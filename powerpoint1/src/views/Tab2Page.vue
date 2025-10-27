@@ -2,20 +2,20 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Tab 2 - Produits (API)</ion-title>
+        <ion-title>Tab 2 - Concerts (API)</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true" class="ion-padding">
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">Tab 2 - Produits (API)</ion-title>
+          <ion-title size="large">Tab 2 - Concerts (API)</ion-title>
         </ion-toolbar>
       </ion-header>
 
       <!-- Indicateur de chargement -->
       <ion-list v-if="loading">
         <ion-item>
-          <ion-label>Chargement des produits...</ion-label>
+          <ion-label>Chargement des concerts...</ion-label>
           <ion-spinner slot="end"></ion-spinner>
         </ion-item>
       </ion-list>
@@ -25,13 +25,13 @@
          <ion-label color="danger">{{ erreur }}</ion-label>
       </ion-item>
 
-      <!-- Liste des produits (maintenant chargée depuis l'API) -->
+      <!-- Liste des concerts (maintenant chargée depuis TON API) -->
       <ion-list v-if="!loading && !erreur">
-        <!-- On utilise v-for pour boucler sur la liste 'produits' (Page 9) -->
-        <ion-item v-for="produit in produits" :key="produit.id">
+        <ion-item v-for="concert in concerts" :key="concert.id">
           <ion-label>
-            <h2>{{ produit.title }}</h2> <!-- dummyjson utilise 'title' -->
-            <p>Prix: {{ produit.price }}€ - Catégorie: {{ produit.category }}</p> <!-- 'price' et 'category' -->
+            <h2>{{ concert.artist }}</h2>
+            <p>Prix: {{ concert.price }}€ - Lieu: {{ concert.venue }}</p>
+            <p>Date: {{ concert.date }} à {{ concert.time }}</p>
           </ion-label>
         </ion-item>
       </ion-list>
@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, inject } from 'vue'; // !! Importer ref et inject
+import { ref, inject } from 'vue';
 import {
   IonPage,
   IonHeader,
@@ -51,33 +51,34 @@ import {
   IonList,
   IonItem,
   IonLabel,
-  IonSpinner, // Ajouté pour le chargement
-  onIonViewWillEnter // Ajouté pour charger les données (Page 6)
+  IonSpinner,
+  onIonViewWillEnter // Pour charger les données (Page 6)
 } from '@ionic/vue';
 
 // Injecter Axios (fourni dans main.js)
 const axios = inject('axios');
 
-// Variables réactives (Page 8-9)
-const produits = ref([]); // Commencer avec une liste vide
+// Variables réactives
+const concerts = ref([]); // Commencer avec une liste vide
 const loading = ref(true);
 const erreur = ref(null);
 
-// Fonction pour charger les produits (Page 16)
-const loadProduits = async () => {
+// Fonction pour charger les concerts (Page 16 - GET)
+const loadConcerts = async () => {
   try {
     loading.value = true;
     erreur.value = null;
     
-    // On utilise une API de test (dummyjson)
-    const response = await axios.get('https://dummyjson.com/products');
+    // !! URL changée pour TON API de concerts
+    const response = await axios.get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php');
     
-    produits.value = response.data.products; // Mettre à jour la liste réactive (Page 8)
-    console.log('Produits chargés:', produits.value);
+    // !! 'response.data.data' basé sur ton API PHP
+    concerts.value = response.data.data; 
+    console.log('Concerts chargés:', concerts.value);
     
   } catch (e) {
     console.error('Erreur lors du chargement:', e);
-    erreur.value = "Erreur: Impossible de charger les produits.";
+    erreur.value = "Erreur: Impossible de charger les concerts. (Vérifie la console F12 et si ton API est en ligne)";
   } finally {
     loading.value = false;
   }
@@ -85,11 +86,12 @@ const loadProduits = async () => {
 
 // Hook de cycle de vie Ionic (Page 6)
 onIonViewWillEnter(() => {
-  console.log('Tab2Page: onIonViewWillEnter');
-  loadProduits(); // Charger les données à chaque fois qu'on entre dans l'onglet
+  console.log('Tab2Page: onIonViewWillEnter - Chargement des concerts...');
+  loadConcerts(); // Charger les données à chaque fois qu'on entre dans l'onglet
 });
 </script>
 
 <style scoped>
 /* Tu peux ajouter du style ici */
 </style>
+
