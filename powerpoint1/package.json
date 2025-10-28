@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "powershell -Command \"Remove-Item -Recurse -Force .\\www -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path .\\www -Force | Out-Null; Copy-Item -Path .\\dist\\* -Destination .\\www -Recurse -Force\"",
     "preview": "vite preview",
     "test:e2e": "cypress run",
     "test:unit": "vitest",
     "lint": "eslint .",
     "ionic:build": "npm run build",
-    "ionic:serve": "npm run dev -- --open"
+    "ionic:serve": "npm run dev -- --open",
+    "make-slides": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$pdf='C:\\\\werkenmetionicenvue\\\\5. Ionic Native - 2526 (1).pdf'; $out=Join-Path $PWD 'src\\\\assets\\\\slides'; if(-not (Test-Path $out)){ New-Item -ItemType Directory -Path $out | Out-Null }; if (Get-Command magick -ErrorAction SilentlyContinue) { & magick -density 150 $pdf -quality 85 \"$out\\\\slide-%03d.png\" } elseif (Get-Command pdftoppm -ErrorAction SilentlyContinue) { & pdftoppm -png $pdf \"$out\\\\slide\" } else { Write-Error 'Neither magick nor pdftoppm found in PATH. Install ImageMagick or Poppler.'; exit 1 }\""
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",

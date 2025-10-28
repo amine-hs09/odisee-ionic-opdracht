@@ -30,6 +30,10 @@ const routes = [
         component: () => import('@/views/Tab3Page.vue')
       }
     ]
+  },
+  {
+    path: '/slides',
+    component: () => import('@/views/SlidesPage.vue')
   }
 ]
 
