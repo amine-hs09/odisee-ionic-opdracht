@@ -2,7 +2,8 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Bezoekers</ion-title> {/* Titre pour l'onglet Visiteurs */}
+        {/* Titre pour l'onglet Visiteurs */}
+        <ion-title>Bezoekers</ion-title> 
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
