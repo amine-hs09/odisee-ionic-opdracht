@@ -1,9 +1,9 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+// Pas d'import ici
 
-const config: CapacitorConfig = {
-  appId: 'ionic.opdracht2',
-  appName: 'opdracht2',
+const config = { // Pas de type ici
+  appId: 'be.aminehs.concertapp', // <--- Utilisez ce format recommandé
+  appName: 'ConcertAppMohamedAmine', // Vous pouvez aussi personnaliser ce nom
   webDir: 'dist'
 };
 
-export default config;
+module.exports = config; // Utilisez module.exports
