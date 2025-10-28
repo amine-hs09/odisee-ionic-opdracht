@@ -15,14 +15,17 @@ const routes = [
         redirect: '/tabs/tab1'
       },
       {
+        // Corriger l'importation de Tab 1
         path: 'tab1',
-        component: () => import('@/views/Tab1Page.vue')
+        component: () => import('@/views/Tab1Page.vue') 
       },
       {
+        // Corriger l'importation de Tab 2
         path: 'tab2',
         component: () => import('@/views/Tab2Page.vue')
       },
       {
+        // Corriger l'importation de Tab 3
         path: 'tab3',
         component: () => import('@/views/Tab3Page.vue')
       }
