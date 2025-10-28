@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        {/* Titre pour l'onglet Tickets */}
+        
         <ion-title>Tickets</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -13,32 +13,31 @@
         </ion-toolbar>
       </ion-header>
 
-      {/* Liste des tickets */}
+     
       <ion-list>
-        {/* Affichage pendant le chargement */}
+      
         <ion-item v-if="loading">
           <ion-label>Laden...</ion-label>
           <ion-spinner></ion-spinner>
         </ion-item>
 
-        {/* Affichage en cas d'erreur */}
         <ion-item v-if="error">
           <ion-label color="danger">{{ error }}</ion-label>
         </ion-item>
 
-        {/* Boucle pour afficher chaque ticket */}
+       
         <ion-item v-for="ticket in tickets" :key="ticket.id">
           <ion-label>
             <h2>{{ ticket.first_name }} {{ ticket.last_name }}</h2>
             <p>Concert: {{ ticket.artist }} ({{ ticket.venue }})</p>
             <p>Aantal: {{ ticket.qty }}</p>
-            {/* Vous pourriez ajouter la date d'achat si votre API la renvoyait dans la liste générale */}
+           
             {/* <p>Gekocht op: {{ ticket.bought_at }}</p> */}
           </ion-label>
-           {/* Ici, on ajoutera plus tard les boutons Edit/Delete pour les tickets si nécessaire */}
+          
         </ion-item>
 
-        {/* Affichage si la liste est vide */}
+       
         <ion-item v-if="!loading && tickets.length === 0 && !error">
           <ion-label>Geen tickets gevonden.</ion-label>
         </ion-item>
