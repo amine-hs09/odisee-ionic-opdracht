@@ -1,8 +1,11 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
-import { RouteRecordRaw } from 'vue-router';
+// import { RouteRecordRaw } from 'vue-router'; // <- Supprimez cette ligne
 import TabsPage from '../views/TabsPage.vue'
 
-const routes: Array<RouteRecordRaw> = [
+// Changez la ligne suivante :
+// const routes: Array<RouteRecordRaw> = [
+// en :
+const routes = [
   {
     path: '/',
     redirect: '/tabs/tab1'
@@ -32,6 +35,9 @@ const routes: Array<RouteRecordRaw> = [
 ]
 
 const router = createRouter({
+  // Modifiez la ligne suivante si 'process.env' n'est pas défini (courant avec Vite)
+  // history: createWebHistory(process.env.BASE_URL),
+  // en :
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
