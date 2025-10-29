@@ -13,6 +13,7 @@ const routes = [
   {
     path: '/tabs/',
     component: TabsPage,
+   // ... (code avant) ...
     children: [
       {
         path: '',
@@ -29,8 +30,15 @@ const routes = [
       {
         path: 'tab3',
         component: () => import('@/views/Tab3Page.vue')
+      },
+      // --- AJOUT DE LA ROUTE ABOUT ---
+      {
+        path: 'about',
+        component: () => import('@/views/AboutPage.vue') 
       }
+      // ------------------------------
     ]
+
   }
 ]
 
