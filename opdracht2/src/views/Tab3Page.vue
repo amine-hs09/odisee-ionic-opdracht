@@ -11,8 +11,6 @@
           <ion-title size="large">Tickets</ion-title>
         </ion-toolbar>
       </ion-header>
-
-      {/* Formulaire d'achat de tickets */}
       <ion-card>
         <ion-card-header>
           <ion-card-title>Nieuw Ticket Kopen</ion-card-title>
