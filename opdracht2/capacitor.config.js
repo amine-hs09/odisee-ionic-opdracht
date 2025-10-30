@@ -4,5 +4,5 @@ const config = {
   webDir: 'dist'
 };
 
-// Utilisation ESM car package.json contient "type": "module"
-export default config;
+// On utilise module.exports car on a supprimé "type": "module"
+module.exports = config;
