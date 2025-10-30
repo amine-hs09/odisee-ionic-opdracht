@@ -2,354 +2,597 @@
   <ion-page>
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>Concerten</ion-title>
+        <ion-title>Mijn Concerten</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="openAddModal">
-            <ion-icon :icon="add" />
+          <ion-button @click="openAddModal" fill="solid">
+            <ion-icon slot="start" :icon="add" />
+            Nieuw
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding">
-      <ion-searchbar v-model="search" placeholder="Zoek op artiest of locatie" :debounce="300" aria-label="Zoek concerten" class="big-search" />
+    <ion-content>
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
 
-      <div class="controls">
-        <ion-segment v-model="segment" aria-label="Filter concerten" class="big-segment">
-          <ion-segment-button value="all">Alle <ion-badge class="seg-badge">{{ concerts.length }}</ion-badge></ion-segment-button>
-          <ion-segment-button value="upcoming">Komend <ion-badge class="seg-badge">{{ upcomingCount }}</ion-badge></ion-segment-button>
-          <ion-segment-button value="past">Voorbij <ion-badge class="seg-badge">{{ pastCount }}</ion-badge></ion-segment-button>
-        </ion-segment>
+      <div class="search-container">
+        <ion-searchbar 
+          v-model="zoekk" 
+          placeholder="Zoek artiest of locatie..." 
+          :debounce="300"
+          show-clear-button="always"
+        />
       </div>
 
-      <template v-if="loading">
-        <ion-skeleton-text animated style="width:100%; height:18px; margin:8px 0" />
-      </template>
+  <ion-segment v-model="segg" mode="md">
+        <ion-segment-button value="all">
+          <ion-label>
+            Alle
+            <ion-badge color="light">{{ myConcerts.length }}</ion-badge>
+          </ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="upcoming">
+          <ion-label>
+            Komende
+            <ion-badge color="success">{{ comingCnt }}</ion-badge>
+          </ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="past">
+          <ion-label>
+            Voorbij
+            <ion-badge color="medium">{{ pastCnt }}</ion-badge>
+          </ion-label>
+        </ion-segment-button>
+      </ion-segment>
 
-      <template v-if="error && !loading">
-        <ion-card color="danger" class="ion-margin">
-          <ion-card-content>
-            <p>{{ error }}</p>
-            <ion-button expand="block" @click="loadConcerts">Opnieuw proberen</ion-button>
-          </ion-card-content>
-        </ion-card>
-      </template>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button fill="clear">
+            <ion-icon slot="start" :icon="swapVertical" />
+              <ion-select 
+              v-model="sorta" 
+              interface="action-sheet"
+              placeholder="Sorteer op..."
+              @ionChange="doSort()"
+            >
+              <ion-select-option value="date_desc">Nieuwste eerst</ion-select-option>
+              <ion-select-option value="date_asc">Oudste eerst</ion-select-option>
+              <ion-select-option value="price_desc">Prijs: hoog-laag</ion-select-option>
+              <ion-select-option value="price_asc">Prijs: laag-hoog</ion-select-option>
+            </ion-select>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
 
-      <ion-list>
-        <ion-card v-for="c in filteredConcerts" :key="c.id" class="concert-card" role="article" :aria-label="`Concert ${c.artist} in ${c.venue}`">
-          <ion-card-header>
-            <ion-card-title class="large-title">
-              <span class="artist-emoji" aria-hidden="true">🧑‍🎤</span>
-              <span class="artist-name">{{ c.artist }}</span>
-              <ion-badge class="status-badge" :color="isUpcoming(c) ? 'success' : 'medium'">{{ isUpcoming(c) ? 'Komend' : 'Voorbij' }}</ion-badge>
-            </ion-card-title>
-            <ion-card-subtitle class="large-sub">
-              <span class="loc-emoji" aria-hidden="true">📍</span>
-              <span class="venue-text">{{ c.venue }}</span>
-              <span class="sep"> — </span>
-              <span class="date-emoji" aria-hidden="true">📅</span>
-              <span class="date-text">{{ formatDate(c.date) }}</span>
-              <span class="time-emoji" aria-hidden="true">🕒</span>
-              <span class="time-text">{{ formatTime(c.time) }}</span>
-            </ion-card-subtitle>
-          </ion-card-header>
-          <ion-card-content>
-            <div class="price-row">
-              <div class="price-label"><span class="money-emoji" aria-hidden="true">💰</span> Prijs</div>
-              <div class="price-value"><span class="price-emoji" aria-hidden="true">🪙</span> € {{ formatPrice(c.price) }}</div>
-            </div>
-          </ion-card-content>
-          <!-- Custom separator / quick action for elderly users -->
-          <ion-item lines="full" button class="separator" @click="quickPurchase(c)">
-            <ion-label class="separator-label">Acheter ce concert — appuyez ici pour être guidé</ion-label>
-            <ion-badge color="tertiary">Acheter</ion-badge>
+  <ion-progress-bar v-if="isLoading" type="indeterminate" />
+
+      <ion-list v-if="!isLoading && !error" lines="none">
+        <ion-item-group v-if="concertsShownn.length === 0">
+          <ion-item>
+            <ion-label class="ion-text-center">
+              <h2>Geen concerten gevonden</h2>
+              <p>Voeg je eerste concert toe!</p>
+            </ion-label>
           </ion-item>
+        </ion-item-group>
 
-          <div class="card-actions">
-            <div class="action-col">
-              <ion-button expand="block" size="large" fill="outline" @click="openEditModal(c)" :aria-label="`Wijzig concert ${c.artist}`">
+  <ion-card v-for="c in concertsShownn" :key="c.id" class="concert-card">
+          <ion-card-header>
+            <ion-card-subtitle>
+              <ion-chip :color="isUpcom(c) ? 'success' : 'medium'" outline>
+                <ion-icon :icon="isUpcom(c) ? calendar : checkmarkCircle" />
+                <ion-label>{{ isUpcom(c) ? 'Komend evenement' : 'Afgelopen' }}</ion-label>
+              </ion-chip>
+            </ion-card-subtitle>
+            <ion-card-title class="artist-title">
+              {{ c.artist }}
+            </ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+            <ion-list class="info-list">
+              <ion-item lines="none">
+                <ion-icon :icon="location" slot="start" color="primary" />
+                <ion-label>
+                  <p class="label-text">Locatie</p>
+                  <h3>{{ c.venue }}</h3>
+                </ion-label>
+              </ion-item>
+
+              <ion-item lines="none">
+                <ion-icon :icon="calendar" slot="start" color="primary" />
+                <ion-label>
+                  <p class="label-text">Datum</p>
+                  <h3>{{ fmtDate(c.date) }}</h3>
+                </ion-label>
+              </ion-item>
+
+              <ion-item lines="none">
+                <ion-icon :icon="time" slot="start" color="primary" />
+                <ion-label>
+                  <p class="label-text">Aanvang</p>
+                  <h3>{{ fmtTime(c.time) }}</h3>
+                </ion-label>
+              </ion-item>
+
+              <ion-item lines="none" class="price-item">
+                <ion-icon :icon="card" slot="start" color="success" />
+                <ion-label>
+                  <p class="label-text">Ticket prijs</p>
+                  <h2 class="price-amount">€ {{ fmtPrice(c.price) }}</h2>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+
+          <ion-row class="card-actions">
+            <ion-col>
+              <ion-button expand="block" fill="outline" @click="openEditModal(c)">
                 <ion-icon slot="start" :icon="pencil" />
-                <span class="btn-emoji" aria-hidden="true">✏️</span>
-                Wijzig
+                Wijzigen
               </ion-button>
-            </div>
-            <div class="action-col">
-                <ion-button expand="block" size="large" color="danger" @click="confirmDelete(c.id)" :aria-label="`Verwijder concert ${c.artist}`">
-                  <ion-icon slot="start" :icon="trash" />
-                  <span class="btn-emoji" aria-hidden="true">🗑️</span>
-                  Verwijder
-                </ion-button>
-            </div>
-          </div>
+            </ion-col>
+            <ion-col>
+              <ion-button expand="block" color="danger" fill="outline" @click="confirmDelete(c.id)">
+                <ion-icon slot="start" :icon="trash" />
+                Verwijderen
+              </ion-button>
+            </ion-col>
+          </ion-row>
         </ion-card>
       </ion-list>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="openAddModal" size="large" aria-label="Nieuw concert toevoegen">
+        <ion-fab-button color="secondary" @click="openAddModal">
           <ion-icon :icon="add" />
         </ion-fab-button>
       </ion-fab>
-
-      <!-- Modal form -->
-      <ion-modal :is-open="isModalOpen" @didDismiss="closeModal">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>{{ editingConcertId ? 'Concert Wijzigen' : 'Nieuw concert' }}</ion-title>
-            <ion-buttons slot="end"><ion-button @click="closeModal">Annuleren</ion-button></ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <ion-list>
-            <ion-item>
-              <ion-label class="form-label" position="stacked">Artiest <span aria-hidden="true">*</span></ion-label>
-              <ion-input v-model="form.artist" placeholder="bv. John Doe" class="big-input" aria-required="true" />
-            </ion-item>
-            <ion-note color="danger" v-if="showErrors && !form.artist">Artiest is verplicht</ion-note>
-
-            <ion-item>
-              <ion-label class="form-label" position="stacked">Locatie <span aria-hidden="true">*</span></ion-label>
-              <ion-input v-model="form.venue" placeholder="bv. Stadsschouwburg" class="big-input" aria-required="true" />
-            </ion-item>
-            <ion-note color="danger" v-if="showErrors && !form.venue">Locatie is verplicht</ion-note>
-
-            <ion-item>
-              <ion-label class="form-label" position="stacked">Prijs (€)</ion-label>
-              <ion-input v-model.number="form.price" type="number" inputmode="decimal" placeholder="25.50" class="big-input" />
-            </ion-item>
-            <ion-note color="danger" v-if="showErrors && (form.price === null || form.price < 0)">Voer een geldige prijs in</ion-note>
-
-            <ion-item>
-              <ion-label class="form-label" position="stacked">Datum</ion-label>
-              <ion-input v-model="form.date" type="date" class="big-input" />
-            </ion-item>
-            <ion-item>
-              <ion-label class="form-label" position="stacked">Tijd</ion-label>
-              <ion-input v-model="form.time" type="time" class="big-input" />
-            </ion-item>
-
-            <div style="margin-top:18px">
-              <ion-button expand="block" size="large" @click="handleSaveConcert" :disabled="saving">{{ editingConcertId ? 'Opslaan' : 'Toevoegen' }}</ion-button>
-            </div>
-          </ion-list>
-        </ion-content>
-      </ion-modal>
-
-      <ion-toast :is-open="toast.open" :message="toast.msg" :color="toast.color" duration="2000" />
     </ion-content>
+
+    
+    <ion-modal :is-open="modalIsOpen" @didDismiss="closeModal">
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>{{ editingIdd ? 'Concert wijzigen' : 'Nieuw concert' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="closeModal">Sluiten</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <ion-list>
+          <ion-item>
+            <ion-input 
+              v-model="formm.artist" 
+              label="Artiest" 
+              label-placement="stacked"
+              placeholder="Naam van de artiest"
+              :counter="true"
+              maxlength="100"
+              error-text="Vul de naam van de artiest in"
+              :class="{ 'ion-invalid': showErrs && !formm.artist }"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-input 
+              v-model="formm.venue" 
+              label="Locatie" 
+              label-placement="stacked"
+              placeholder="Concertzaal of locatie"
+              :counter="true"
+              maxlength="100"
+              error-text="Vul de locatie in"
+              :class="{ 'ion-invalid': showErrs && !formm.venue }"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-input 
+              v-model="formm.date" 
+              label="Datum" 
+              label-placement="stacked"
+              type="date"
+              error-text="Selecteer een datum"
+              :class="{ 'ion-invalid': showErrs && !formm.date }"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-input 
+              v-model="formm.time" 
+              label="Aanvangstijd" 
+              label-placement="stacked"
+              type="time"
+              error-text="Selecteer een tijd"
+              :class="{ 'ion-invalid': showErrs && !formm.time }"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-input 
+              v-model.number="formm.price" 
+              label="Prijs (€)" 
+              label-placement="stacked"
+              type="number"
+              inputmode="decimal"
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              error-text="Vul een geldige prijs in"
+              :class="{ 'ion-invalid': showErrs && (formm.price === null || formm.price < 0) }"
+            />
+          </ion-item>
+        </ion-list>
+
+        <div class="ion-padding-top">
+            <ion-button 
+            expand="block" 
+            size="large"
+            @click="saveConcert" 
+            :disabled="isSaving"
+          >
+            <ion-icon slot="start" :icon="checkmarkCircle" />
+              {{ editingIdd ? 'Wijzigingen opslaan' : 'Concert toevoegen' }}
+          </ion-button>
+        </div>
+      </ion-content>
+    </ion-modal>
+
+    <ion-toast 
+      :is-open="toast.open" 
+      :message="toast.msg" 
+      :color="toast.color" 
+      :duration="2500"
+      position="top"
+      @didDismiss="toast.open = false"
+    />
   </ion-page>
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue';
-import axiosLib from 'axios';
+import { ref, inject, watch } from 'vue';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon,
-  IonList, IonItem, IonLabel, IonNote, IonText, IonToast, IonModal, IonInput,
-  IonDatetime, IonDatetimeButton, IonSearchbar, IonSegment, IonSegmentButton,
-  IonRefresher, IonRefresherContent, IonSkeletonText, IonCard, IonCardHeader,
-  IonCardContent, IonCardTitle, IonFab, IonFabButton, IonItemSliding, IonItemOptions,
-   IonItemOption, onIonViewWillEnter, alertController, IonListHeader, IonBadge
+  IonList, IonItem, IonLabel, IonToast, IonInput, IonSearchbar, IonSegment, IonSegmentButton,
+  IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle,
+  IonFab, IonFabButton, IonChip, IonBadge, IonModal, IonProgressBar, IonSelect, IonSelectOption,
+  IonRefresher, IonRefresherContent, IonItemGroup, IonRow, IonCol,
+  onIonViewWillEnter, alertController
 } from '@ionic/vue';
-import { add, pencil, trash } from 'ionicons/icons';
-import { useRouter } from 'vue-router';
+import { add, pencil, trash, calendar, time, location, card, checkmarkCircle, swapVertical } from 'ionicons/icons';
 
-const injectedAxios = inject('axios'); // try injected axios (if app configured)
-const axios = injectedAxios ?? axiosLib;
+const axios = inject('axios');
 
-// UI state
-const loading = ref(true);
-const saving = ref(false);
+ 
+const isLoading = ref(false);
+const isSaving = ref(false);
 const error = ref(null);
-const isModalOpen = ref(false);
-const showErrors = ref(false);
-const toast = ref({ open: false, msg: '', color: 'success', position: 'bottom' });
+const modalIsOpen = ref(false);
+const showErrs = ref(false);
+const toast = ref({ open: false, msg: '', color: 'success' });
 
-// data
-const concerts = ref([]);
-const search = ref('');
-const segment = ref('all'); // all | upcoming | past
-const editingConcertId = ref(null);
+const myConcerts = ref([]);
+const concertsShownn = ref([]);
+const zoekk = ref('');
+const segg = ref('all');
+const sorta = ref('date_desc');
+const editingIdd = ref(null);
+const formm = ref({ artist: '', date: '', time: '', venue: '', price: null });
 
-// form model
-const form = ref({ artist: '', date: '', time: '', venue: '', price: null });
+const comingCnt = ref(0);
+const pastCnt = ref(0);
 
-// Dates
 const todayIso = new Date().toISOString().slice(0, 10);
-const maxDate = '2100-12-31';
 
-// ===== Helpers
-const isValid = computed(() => {
-  return !!form.value.artist?.trim()
-    && !!form.value.venue?.trim()
-    && !!form.value.date
-    && !!form.value.time
-    && form.value.price !== null
-    && Number(form.value.price) >= 0;
-});
-
-const filteredConcerts = computed(() => {
-  const term = search.value.trim().toLowerCase();
-  const now = new Date();
-  return concerts.value.filter(c => {
-    const matches = !term
-      || c.artist?.toLowerCase().includes(term)
-      || c.venue?.toLowerCase().includes(term);
-    if (!matches) return false;
-
-    if (segment.value === 'upcoming') return isAfterOrSame(dayFrom(c.date), dayFrom(now));
-    if (segment.value === 'past') return isBefore(dayFrom(c.date), dayFrom(now));
-    return true;
-  });
-});
-
-const upcomingCount = computed(() => concerts.value.filter(c => isUpcoming(c)).length);
-const pastCount = computed(() => concerts.value.filter(c => !isUpcoming(c)).length);
-
-function isUpcoming(c) {
-  try {
-    const d = new Date(c.date);
-    const today = new Date();
-    // compare only date portion
-    const a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    const b = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return a.getTime() >= b.getTime();
-  } catch (e) { return false; }
+function fmtDate(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  return parts[2] + '/' + parts[1] + '/' + parts[0];
 }
 
-const router = useRouter();
-
-function quickPurchase(concert) {
-  // navigate to visitors tab with purchase action and concert details in query
-  router.push({ path: '/tabs/tab2', query: {
-    action: 'purchase',
-    concertId: concert.id,
-    artist: concert.artist,
-    venue: concert.venue,
-    date: concert.date,
-    time: concert.time,
-    price: concert.price
-  }});
+function fmtTime(t) {
+  if (!t) return '';
+  return t.slice(0, 5);
 }
 
-function dayFrom(d) { const x = new Date(d); return new Date(x.getFullYear(), x.getMonth(), x.getDate()); }
-function isBefore(a, b){ return a.getTime() < b.getTime(); }
-function isAfterOrSame(a, b){ return a.getTime() >= b.getTime(); }
-function formatDate(d) { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; }
-function formatTime(t) { if (!t) return ''; return t.slice(0,5); }
-function formatPrice(p) { const v = parseFloat(p ?? 0); return v.toFixed(2); }
+function fmtPrice(p) {
+  const v = parseFloat(p);
+  if (isNaN(v)) return '0.00';
+  return v.toFixed(2);
+}
 
-// Normalisation vers API
-function normalizeDate(isoDate) {
+function normDate(isoDate) {
   if (!isoDate) return '';
   const d = new Date(isoDate);
   const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${dd}`;
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
 }
-function normalizeTime(isoTime) {
+
+function normTime(isoTime) {
   if (!isoTime) return '';
   const t = isoTime.split('T')[1] || isoTime;
-  const [hh, mm='00', ss='00'] = t.split(':');
-  return `${hh}:${mm}:${ss.slice(0,2)}`;
+  const parts = t.split(':');
+  return parts[0] + ':' + parts[1] + ':00';
 }
 
-// Toast helper
-async function presentToast(message, color='success', position='bottom') {
-  toast.value = { open: true, msg: message, color, position };
+function isUpcom(c) {
+  const d = new Date(c.date);
+  const today = new Date();
+  const eventDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return eventDate >= currentDate;
 }
 
-// Actions UI
+function toasty(message, color) {
+  toast.value.open = true;
+  toast.value.msg = message;
+  toast.value.color = color;
+}
+
+function doFilter() {
+  const term = zoekk.value.trim().toLowerCase();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  concertsShownn.value = [];
+  
+  for (let i = 0, end = myConcerts.value.length; i < end; i++) {
+    const c = myConcerts.value[i];
+    
+    let matches = true;
+    if (term) {
+      const artist = (c.artist || '').toLowerCase();
+      const venue = (c.venue || '').toLowerCase();
+      matches = artist.includes(term) || venue.includes(term);
+    }
+    
+    if (!matches) continue;
+    
+    if (segg.value === 'upcoming') {
+      const d = new Date(c.date);
+      const eventDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      if (eventDate < today) continue;
+    } else if (segg.value === 'past') {
+      const d = new Date(c.date);
+      const eventDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      if (eventDate >= today) continue;
+    }
+    
+    concertsShownn.value.push(c);
+  }
+  
+  doSort();
+}
+
+function doSort() {
+  const arr = concertsShownn.value;
+  const len = arr.length;
+  
+  for (let i = 0; i < len - 1; i++) {
+    for (let j = 0; j < len - i - 1; j++) {
+      const a = arr[j];
+      const b = arr[j + 1];
+      
+      let shouldSwap = false;
+  if (sorta.value === 'date_desc') {
+        const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+        const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+        shouldSwap = dateA < dateB;
+      } else if (sorta.value === 'date_asc') {
+        const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+        const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+        shouldSwap = dateA > dateB;
+      } else if (sorta.value === 'price_desc') {
+        const priceA = Number(a.price) || 0;
+        const priceB = Number(b.price) || 0;
+        shouldSwap = priceA < priceB;
+      } else if (sorta.value === 'price_asc') {
+        const priceA = Number(a.price) || 0;
+        const priceB = Number(b.price) || 0;
+        shouldSwap = priceA > priceB;
+  }
+      
+      if (shouldSwap) {
+        const temp = arr[j];
+        arr[j] = arr[j + 1];
+        arr[j + 1] = temp;
+      }
+    }
+  }
+}
+
+function updCounts() {
+  let upcoming = 0;
+  let past = 0;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  for (let i = 0, end = myConcerts.value.length; i < end; i++) {
+    const c = myConcerts.value[i];
+    const d = new Date(c.date);
+    const eventDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    
+    if (eventDate >= today) {
+      upcoming++;
+    } else {
+      past++;
+    }
+  }
+  
+  comingCnt.value = upcoming;
+  pastCnt.value = past;
+}
+
 function openAddModal() {
-  showErrors.value = false;
-  editingConcertId.value = null;
-  form.value = {
+  showErrs.value = false;
+  editingIdd.value = null;
+  formm.value = {
     artist: '',
     venue: '',
     price: null,
     date: todayIso,
     time: '20:00'
   };
-  isModalOpen.value = true;
+  modalIsOpen.value = true;
 }
+
 function openEditModal(concert) {
-  showErrors.value = false;
-  editingConcertId.value = concert.id;
-  const hhmm = (concert.time ?? '20:00').slice(0,5);
-  form.value = {
-    artist: concert.artist ?? '',
-    venue: concert.venue ?? '',
-    price: Number(concert.price ?? 0),
-    date: concert.date ?? todayIso,
-    time: hhmm
+  showErrs.value = false;
+  editingIdd.value = concert.id;
+  formm.value = {
+    artist: concert.artist || '',
+    venue: concert.venue || '',
+    price: Number(concert.price) || 0,
+    date: concert.date || todayIso,
+    time: (concert.time || '20:00').slice(0, 5)
   };
-  isModalOpen.value = true;
+  modalIsOpen.value = true;
 }
-function closeModal() { isModalOpen.value = false; editingConcertId.value = null; }
 
-// API
-async function loadConcerts() {
-  loading.value = true; error.value = null;
-  try {
-    const res = await axios.get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php');
-    const arr = Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
-    concerts.value = arr;
-  } catch (e) {
-    console.error(e);
-    error.value = 'Laden mislukt. Controleer je verbinding of probeer later opnieuw.';
-  } finally {
-    loading.value = false;
+function closeModal() {
+  modalIsOpen.value = false;
+  editingIdd.value = null;
+}
+
+function loadConcerts() {
+  isLoading.value = true;
+  error.value = null;
+  
+  axios
+    .get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php')
+    .then(response => {
+      if (response.status !== 200) {
+      console.log('Status niet 200:', response.status);
+      error.value = 'Laden mislukt';
+      isLoading.value = false;
+      return;
+      }
+      
+      const data = response.data.data || response.data;
+      if (!Array.isArray(data)) {
+      console.log('Data is geen array');
+      error.value = 'Geen data';
+      isLoading.value = false;
+      return;
+      }
+      
+      myConcerts.value = [];
+      for (let i = 0, end = data.length; i < end; i++) {
+        myConcerts.value.push(data[i]);
+      }
+      
+      updCounts();
+      doFilter();
+      
+  isLoading.value = false;
+    })
+    .catch(e => {
+      console.error('API Error:', e);
+      error.value = 'Er ging iets mis bij het laden';
+      toasty('Laden mislukt', 'danger');
+      isLoading.value = false;
+    });
+}
+
+function handleRefresh(event) {
+  loadConcerts();
+  event.target.complete();
+}
+
+function saveConcert() {
+  showErrs.value = true;
+
+  if (!formm.value.artist || !formm.value.artist.trim()) {
+    toasty('Vul de artiest in', 'warning');
+    return;
   }
-}
+  if (!formm.value.venue || !formm.value.venue.trim()) {
+    toasty('Vul de locatie in', 'warning');
+    return;
+  }
+  if (!formm.value.date) {
+    toasty('Selecteer een datum', 'warning');
+    return;
+  }
+  if (!formm.value.time) {
+    toasty('Selecteer een tijd', 'warning');
+    return;
+  }
+  if (formm.value.price === null || formm.value.price < 0) {
+    toasty('Vul een geldige prijs in', 'warning');
+    return;
+  }
+  isSaving.value = true;
 
-async function handleSaveConcert() {
-  showErrors.value = true;
-  if (!isValid.value) { await presentToast('Vul alle velden correct in.', 'warning', 'middle'); return; }
-  saving.value = true;
-  try {
-    const payload = {
-      artist: form.value.artist.trim(),
-      date: normalizeDate(form.value.date),
-      time: normalizeTime(form.value.time),
-      venue: form.value.venue.trim(),
-      price: Number(form.value.price)
-    };
-    let res;
-    if (editingConcertId.value) {
-      res = await axios.put('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php', { id: editingConcertId.value, ...payload });
-      await presentToast(res.data?.message || 'Concert bijgewerkt!', 'success', 'top');
-    } else {
-      res = await axios.post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php', payload);
-      await presentToast(res.data?.message || 'Concert toegevoegd!', 'success', 'top');
-    }
-    closeModal();
-    await loadConcerts();
-  } catch (e) {
-    console.error(e);
-    await presentToast(e?.response?.data?.message || 'Opslaan mislukt.', 'danger', 'middle');
-  } finally {
-    saving.value = false;
+  const payload = {
+    artist: formm.value.artist.trim(),
+    date: normDate(formm.value.date),
+    time: normTime(formm.value.time),
+    venue: formm.value.venue.trim(),
+    price: Number(formm.value.price)
+  };
+
+  if (editingIdd.value) {
+    payload.id = editingIdd.value;
+    axios
+      .put('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php', payload)
+      .then(response => {
+        toasty('Concert succesvol gewijzigd', 'success');
+        closeModal();
+        loadConcerts();
+        isSaving.value = false;
+      })
+      .catch(e => {
+        console.error('Update error:', e);
+        toasty('Wijzigen mislukt', 'danger');
+        isSaving.value = false;
+      });
+  } else {
+    axios
+      .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php', payload)
+      .then(response => {
+        toasty('Concert succesvol toegevoegd', 'success');
+        closeModal();
+        loadConcerts();
+        isSaving.value = false;
+      })
+      .catch(e => {
+        console.error('Create error:', e);
+        toasty('Toevoegen mislukt', 'danger');
+        isSaving.value = false;
+      });
   }
 }
 
 async function confirmDelete(id) {
   const alert = await alertController.create({
-    header: 'Verwijderen bevestigen',
-    message: 'Weet u zeker dat u dit concert wilt verwijderen?',
+    header: 'Concert verwijderen?',
+    message: 'Deze actie kan niet ongedaan worden gemaakt.',
     buttons: [
-      { text: 'Annuleren', role: 'cancel' },
+      {
+        text: 'Annuleren',
+        role: 'cancel'
+      },
       {
         text: 'Verwijderen',
         role: 'destructive',
-        handler: async () => {
-          try {
-            const res = await axios.delete('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php', { data: { id } });
-            await presentToast(res.data?.message || 'Concert verwijderd', 'danger', 'bottom');
-            await loadConcerts();
-          } catch (e) {
-            console.error(e);
-            await presentToast(e?.response?.data?.message || 'Verwijderen mislukt.', 'danger', 'middle');
-          }
+        handler: () => {
+          axios
+            .delete('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php', { data: { id: id } })
+            .then(response => {
+              toasty('Concert verwijderd', 'medium');
+              loadConcerts();
+            })
+            .catch(e => {
+              console.error('Delete error:', e);
+              toasty('Verwijderen mislukt', 'danger');
+            });
         }
       }
     ]
@@ -357,70 +600,158 @@ async function confirmDelete(id) {
   await alert.present();
 }
 
-// lifecycle
-onIonViewWillEnter(loadConcerts);
+onIonViewWillEnter(() => {
+  loadConcerts();
+});
+watch([zoekk, segg], () => {
+  doFilter();
+});
+
+watch(sorta, () => {
+  doSort();
+});
+
+watch(myConcerts, () => {
+  updCounts();
+  doFilter();
+}, { deep: true });
 </script>
 
 <style scoped>
-/* Liste */
-.list-row { --min-height: 72px; }
-.title { font-weight: 800; font-size: 1.15rem; }
-.muted { color: var(--ion-color-medium-shade); }
-
-/* Accessibility: larger baseline */
-ion-page, ion-content { font-size: 1.05rem; }
-
-/* Bigger search and segment for older users */
-.big-search { --padding-start: 12px; --padding-end: 12px; height: 52px; }
-.big-segment { --min-height: 44px; margin-top:8px; }
-
-/* Card visuals */
-.large-title { font-size: 1.25rem; font-weight: 800; }
-.large-sub { font-size: 1rem; color: var(--ion-color-medium); }
-.concert-card { margin-bottom: 12px; padding-bottom: 6px; }
-.price-row { display:flex; justify-content:space-between; align-items:center; font-size:1.1rem; margin-top:6px; }
-.price-value { font-weight:700; }
-
-/* Card action buttons larger and side-by-side */
-.card-actions { display:grid; grid-template-columns: 1fr 1fr; gap:8px; padding: 12px; }
-.action-col ion-button { --padding-top: 10px; --padding-bottom: 10px; font-size:1.05rem; }
-
-/* Form inputs larger */
-.big-input { font-size:1.05rem; padding: 10px 6px; }
-.form-label { font-weight:700; font-size:1.05rem; }
-
-/* Emoji and color decorations */
-.artist-emoji { margin-right:8px; font-size:1.2rem; vertical-align:middle; }
-.artist-name { color:#7b1fa2; font-weight:800; }
-.price-emoji { margin-right:6px; font-size:1.05rem; }
-.money-emoji { margin-right:6px; }
-.price-value { color: #f1c40f; }
-.loc-emoji, .date-emoji, .time-emoji { margin-right:6px; }
-.venue-text, .date-text, .time-text { margin-right:8px; }
-.btn-emoji { margin-left:6px; margin-right:6px; }
-
-.seg-badge { margin-left:8px; --background: var(--ion-color-light); color: var(--ion-color-dark); font-weight:700; }
-.status-badge { margin-left:12px; font-weight:700; }
-.separator { background: var(--ion-color-step-50); border-radius:8px; margin:6px 0; --padding-start:12px; --padding-end:12px; }
-.separator-label { font-weight:700; text-align:left; }
-
-/* Modal look & spacing */
-ion-modal ion-content {
-  --padding-start: 16px; --padding-end: 16px; --padding-top: 12px; --padding-bottom: 16px;
+ion-content {
+  --padding-bottom: 80px;
 }
-.clean-list { border-radius: 12px; background: var(--ion-color-step-50, #1e1e1e); padding: 4px 8px; }
-.clean-list .section-title { font-weight: 700; opacity: .9; padding-left: 8px; }
-.field { --inner-padding-top: 8px; --inner-padding-bottom: 8px; }
-.picker-row { margin-top: 4px; }
 
-/* Footer du formulaire */
-.sticky-footer {
-  position: sticky;
-  bottom: 0;
+.search-container {
+  padding: 12px 16px 8px;
+}
+
+ion-searchbar {
+  --border-radius: 12px;
+  --box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+ion-segment {
+  margin: 8px 16px 12px;
+  --background: var(--ion-color-light);
+}
+
+ion-segment-button {
+  --indicator-height: 3px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+ion-segment-button ion-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+ion-badge {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.concert-card {
+  margin: 12px 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+.artist-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ion-color-dark);
+  margin-top: 4px;
+}
+
+.info-list {
   background: transparent;
-  padding: 12px 0 0 0;
+  padding: 0;
 }
 
-/* Cartes */
-ion-card { border-radius: 12px; }
+.info-list ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --min-height: 48px;
+  margin-bottom: 8px;
+}
+
+.label-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.info-list h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin: 4px 0 0 0;
+}
+
+.price-item {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ion-color-light);
+}
+
+.price-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ion-color-success);
+  margin: 4px 0 0 0;
+}
+
+.card-actions {
+  padding: 0 16px 12px;
+  gap: 8px;
+}
+
+.card-actions ion-button {
+  font-weight: 600;
+  font-size: 15px;
+  --border-width: 2px;
+}
+
+ion-fab-button {
+  --box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+ion-modal ion-list {
+  background: transparent;
+  padding: 8px 0;
+}
+
+ion-modal ion-item {
+  --background: var(--ion-color-light);
+  --border-radius: 12px;
+  margin-bottom: 16px;
+  --padding-start: 16px;
+}
+
+ion-input {
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  font-size: 16px;
+}
+
+ion-input.ion-invalid {
+  --highlight-color-invalid: var(--ion-color-danger);
+}
+
+ion-chip {
+  font-weight: 600;
+  height: 28px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .concert-card {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+}
 </style>

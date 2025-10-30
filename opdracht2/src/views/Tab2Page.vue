@@ -2,118 +2,259 @@
   <ion-page>
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>Bezoekers</ion-title>
+        <ion-title>Mijn Bezoekers</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="openIdentityModal" aria-label="Identificeer gebruiker">
-            <ion-icon slot="icon-only" :icon="add"></ion-icon>
+          <ion-button @click="openIdentityModal" fill="solid">
+            <ion-icon slot="start" :icon="person" />
+            Identificeer
           </ion-button>
-          <ion-button v-if="cartItemCount > 0" @click="openCartModal" aria-label="Open winkelwagen">
-            <ion-icon slot="icon-only" :icon="add"></ion-icon>
-            <ion-badge class="cart-badge">{{ cartItemCount }}</ion-badge>
-          </ion-button>
-          <ion-button @click="openAddModal" aria-label="Nieuwe bezoeker toevoegen">
-            <ion-icon slot="icon-only" :icon="add"></ion-icon>
+          <ion-button v-if="cartItemCount > 0" @click="openCartModal" fill="solid" color="secondary">
+            <ion-icon slot="start" :icon="cart" />
+            <ion-badge>{{ cartItemCount }}</ion-badge>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
+      <ion-toolbar v-if="currentUser">
+        <ion-chip color="success">
+          <ion-icon :icon="currentUser.type === 'prof' ? schoolOutline : personCircle" />
+          <ion-label>{{ currentUser.name }}</ion-label>
+        </ion-chip>
+      </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Bezoekers</ion-title>
-        </ion-toolbar>
-      </ion-header>
 
-      <ion-text color="medium" class="ion-padding-start ion-padding-end">
-         <p>Klik op '+' om een nieuwe bezoeker toe te voegen. Klik op het potlood om te wijzigen of de prullenbak om te verwijderen.</p>
-      </ion-text>
+    <ion-content>
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
 
-      <ion-list>
-        <ion-item v-if="loading">
-          <ion-label>Laden...</ion-label>
-          <ion-spinner name="crescent"></ion-spinner>
-        </ion-item>
-        <ion-item v-if="error">
-          <ion-label color="danger">{{ error }}</ion-label>
-        </ion-item>
+      <div class="welcome-card ion-padding">
+        <ion-card>
+          <ion-card-content>
+            <p class="intro-text">
+              Beheer hier alle concertbezoekers. Voeg nieuwe bezoekers toe of pas bestaande gegevens aan.
+            </p>
+          </ion-card-content>
+        </ion-card>
+      </div>
 
-        <ion-item v-for="visitor in visitors" :key="visitor.id">
-          <ion-label>
-            <h2>{{ visitor.first_name }} {{ visitor.last_name }}</h2>
-            <p>{{ visitor.email }}</p>
-            <p>Geboren: {{ visitor.birth_date }}</p>
-          </ion-label>
-          <div slot="end" class="button-group">
-            <ion-button fill="clear" color="medium" size="small" @click="openEditModal(visitor)" aria-label="Wijzig bezoeker">
-              <ion-icon slot="icon-only" :icon="pencil"></ion-icon>
-            </ion-button>
-            <ion-button fill="clear" color="danger" size="small" @click="handleDeleteVisitor(visitor.id)" aria-label="Verwijder bezoeker">
-               <ion-icon slot="icon-only" :icon="trash"></ion-icon>
-            </ion-button>
-          </div>
-        </ion-item>
+      <ion-searchbar 
+        v-model="searchText" 
+        placeholder="Zoek op naam of email..." 
+        :debounce="300"
+        show-clear-button="always"
+        class="search-bar"
+        @ionInput="filterVisitors()"
+      />
 
-        <ion-item v-if="!loading && visitors.length === 0 && !error">
-          <ion-label>Geen bezoekers gevonden.</ion-label>
-        </ion-item>
+      <ion-progress-bar v-if="loading" type="indeterminate" />
+
+      <ion-list v-if="!loading && !error" lines="none">
+        <ion-item-group v-if="filteredVisitors.length === 0">
+          <ion-item>
+            <ion-label class="ion-text-center">
+              <h2>Geen bezoekers gevonden</h2>
+              <p>Voeg je eerste bezoeker toe!</p>
+            </ion-label>
+          </ion-item>
+        </ion-item-group>
+
+        <ion-card v-for="visitor in filteredVisitors" :key="visitor.id" class="visitor-card">
+          <ion-card-header>
+            <ion-card-title class="visitor-name">
+              {{ visitor.first_name }} {{ visitor.last_name }}
+            </ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+            <ion-list class="info-list">
+              <ion-item lines="none">
+                <ion-icon :icon="mail" slot="start" color="primary" />
+                <ion-label>
+                  <p class="label-text">Email</p>
+                  <h3>{{ visitor.email }}</h3>
+                </ion-label>
+              </ion-item>
+
+              <ion-item lines="none">
+                <ion-icon :icon="calendar" slot="start" color="primary" />
+                <ion-label>
+                  <p class="label-text">Geboortedatum</p>
+                  <h3>{{ formatDate(visitor.birth_date) }}</h3>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+
+          <ion-row class="card-actions">
+            <ion-col>
+              <ion-button expand="block" fill="outline" @click="openEditModal(visitor)">
+                <ion-icon slot="start" :icon="pencil" />
+                Wijzigen
+              </ion-button>
+            </ion-col>
+            <ion-col>
+              <ion-button expand="block" color="danger" fill="outline" @click="handleDeleteVisitor(visitor.id)">
+                <ion-icon slot="start" :icon="trash" />
+                Verwijderen
+              </ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-card>
       </ion-list>
 
-    <ion-modal :is-open="isModalOpen" @didDismiss="closeModal">
-        <ion-header>
-          <ion-toolbar color="secondary">
-            <ion-title>{{ editingVisitorId ? 'Bezoeker Wijzigen' : 'Nieuwe Bezoeker' }}</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="closeModal">Annuleren</ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-           <form @submit.prevent="handleSaveVisitor">
-             <ion-item>
-              <ion-input label="Voornaam" label-placement="stacked" v-model="newVisitorData.first_name" required placeholder="Jan"></ion-input>
-            </ion-item>
-            <ion-item>
-              <ion-input label="Achternaam" label-placement="stacked" v-model="newVisitorData.last_name" required placeholder="Janssens"></ion-input>
-            </ion-item>
-             <ion-item>
-              <ion-input label="Geboortedatum" label-placement="stacked" type="date" v-model="newVisitorData.birth_date" required></ion-input>
-            </ion-item>
-            <ion-item>
-              <ion-input label="E-mailadres" label-placement="stacked" type="email" v-model="newVisitorData.email" required placeholder="jan.janssens@example.com"></ion-input>
-            </ion-item>
-            <ion-button type="submit" expand="block" class="ion-margin-top">Opslaan</ion-button>
-          </form>
-        </ion-content>
-      </ion-modal>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button color="secondary" @click="openAddModal">
+          <ion-icon :icon="add" />
+        </ion-fab-button>
+      </ion-fab>
+    </ion-content>
 
-    <!-- Identity modal: simple selector for visitor or professor/tester -->
-    <ion-modal :is-open="identityModalOpen" @didDismiss="() => identityModalOpen=false">
+    <!-- Add/Edit Visitor Modal -->
+    <ion-modal :is-open="isModalOpen" @didDismiss="closeModal">
       <ion-header>
-        <ion-toolbar color="secondary">
-          <ion-title>Identificeer</ion-title>
-          <ion-buttons slot="end"><ion-button @click="identityModalOpen=false">Sluiten</ion-button></ion-buttons>
+        <ion-toolbar color="primary">
+          <ion-title>{{ editingVisitorId ? 'Bezoeker wijzigen' : 'Nieuwe bezoeker' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="closeModal">Sluiten</ion-button>
+          </ion-buttons>
         </ion-toolbar>
       </ion-header>
+
       <ion-content class="ion-padding">
-        <p>Kies of u bent een bezoeker of een professor/tester:</p>
-        <ion-item>
-          <ion-label position="stacked">Ik ben bezoeker</ion-label>
-          <ion-select v-model="currentUserTemp" placeholder="Selecteer bezoeker">
-            <ion-select-option v-for="v in visitors" :key="v.id" :value="{type: 'visitor', id: v.id, name: v.first_name + ' ' + v.last_name}">{{ v.first_name }} {{ v.last_name }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <div style="margin-top:12px">OF</div>
-        <ion-item>
-          <ion-label position="stacked">Ik ben professor/tester</ion-label>
-          <ion-input v-model="profName" placeholder="Bijv. Mnr. Jansen"></ion-input>
-        </ion-item>
-        <div style="margin-top:18px">
-          <ion-button expand="block" @click="applyIdentity">Bevestig</ion-button>
+        <ion-list>
+          <ion-item>
+            <ion-input 
+              v-model="newVisitorData.first_name" 
+              label="Voornaam" 
+              label-placement="stacked"
+              placeholder="Bijv. Jan"
+              :counter="true"
+              maxlength="50"
+              error-text="Vul de voornaam in"
+              :class="{ 'ion-invalid': showErrors && !newVisitorData.first_name }"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-input 
+              v-model="newVisitorData.last_name" 
+              label="Achternaam" 
+              label-placement="stacked"
+              placeholder="Bijv. Janssens"
+              :counter="true"
+              maxlength="50"
+              error-text="Vul de achternaam in"
+              :class="{ 'ion-invalid': showErrors && !newVisitorData.last_name }"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-input 
+              v-model="newVisitorData.birth_date" 
+              label="Geboortedatum" 
+              label-placement="stacked"
+              type="date"
+              error-text="Selecteer een geboortedatum"
+              :class="{ 'ion-invalid': showErrors && !newVisitorData.birth_date }"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-input 
+              v-model="newVisitorData.email" 
+              label="E-mailadres" 
+              label-placement="stacked"
+              type="email"
+              placeholder="naam@voorbeeld.be"
+              :counter="true"
+              maxlength="100"
+              error-text="Vul een geldig e-mailadres in"
+              :class="{ 'ion-invalid': showErrors && !newVisitorData.email }"
+            />
+          </ion-item>
+        </ion-list>
+
+        <div class="ion-padding-top">
+          <ion-button 
+            expand="block" 
+            size="large"
+            @click="handleSaveVisitor"
+            :disabled="saving"
+          >
+            <ion-icon slot="start" :icon="checkmarkCircle" />
+            {{ editingVisitorId ? 'Wijzigingen opslaan' : 'Bezoeker toevoegen' }}
+          </ion-button>
         </div>
       </ion-content>
     </ion-modal>
 
-    <!-- Cart modal: review multiple concerts, choose visitor and checkout -->
+    <!-- Identity Modal -->
+    <ion-modal :is-open="identityModalOpen" @didDismiss="identityModalOpen = false">
+      <ion-header>
+        <ion-toolbar color="secondary">
+          <ion-title>Wie ben je?</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="identityModalOpen = false">Sluiten</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <ion-card>
+          <ion-card-content>
+            <p class="identity-intro">Identificeer jezelf om door te gaan</p>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-list>
+          <ion-list-header>
+            <ion-label>Ik ben een bezoeker</ion-label>
+          </ion-list-header>
+          <ion-item>
+            <ion-select 
+              v-model="currentUserTemp" 
+              placeholder="Selecteer je naam"
+              interface="action-sheet"
+            >
+              <ion-select-option 
+                v-for="v in visitors" 
+                :key="v.id" 
+                :value="{type: 'visitor', id: v.id, name: v.first_name + ' ' + v.last_name}"
+              >
+                {{ v.first_name }} {{ v.last_name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <div class="divider ion-padding">
+            <ion-text color="medium">
+              <p>— OF —</p>
+            </ion-text>
+          </div>
+
+          <ion-list-header>
+            <ion-label>Ik ben een professor/tester</ion-label>
+          </ion-list-header>
+          <ion-item>
+            <ion-input 
+              v-model="profName" 
+              placeholder="Bijv. Prof. Jansen"
+              label="Naam"
+              label-placement="stacked"
+            />
+          </ion-item>
+        </ion-list>
+
+        <div class="ion-padding-top">
+          <ion-button expand="block" size="large" @click="applyIdentity">
+            <ion-icon slot="start" :icon="checkmarkCircle" />
+            Bevestigen
+          </ion-button>
+        </div>
+      </ion-content>
+    </ion-modal>
+
+    <!-- Cart Modal -->
     <ion-modal :is-open="cartModalOpen" @didDismiss="closeCartModal">
       <ion-header>
         <ion-toolbar color="primary">
@@ -123,284 +264,525 @@
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
+
       <ion-content class="ion-padding">
-        <div v-if="cart.length === 0">
-          <p>Uw winkelwagen is leeg. Voeg concerten toe vanuit het tabblad Concerten.</p>
+        <div v-if="cartItems.length === 0" class="empty-cart">
+          <ion-card>
+            <ion-card-content class="ion-text-center">
+              <ion-icon :icon="cartOutline" size="large" color="medium" />
+              <p>Je winkelwagen is leeg</p>
+              <p class="small-text">Voeg concerten toe vanuit het Concerten tabblad</p>
+            </ion-card-content>
+          </ion-card>
         </div>
-        <ion-list v-else>
-          <ion-item v-for="item in cart" :key="item.concertId">
-            <ion-label>
-              <h2>{{ item.artist }}</h2>
-              <p>{{ item.venue }} — {{ formatDate(item.date) }} {{ formatTime(item.time) }}</p>
-              <p>Prijs: € {{ formatPrice(item.price) }}</p>
-            </ion-label>
-            <div slot="end" style="width:140px">
-              <ion-item>
-                <ion-label position="stacked">Aantal</ion-label>
-                <ion-input type="number" v-model.number="item.qty" min="1"></ion-input>
+
+        <ion-list v-else lines="none">
+          <ion-card v-for="item in cartItems" :key="item.concertId" class="cart-item">
+            <ion-card-header>
+              <ion-card-title>{{ item.artist }}</ion-card-title>
+              <ion-card-subtitle>
+                {{ item.venue }}
+              </ion-card-subtitle>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="cart-item-details">
+                <p><ion-icon :icon="calendar" /> {{ formatDate(item.date) }} om {{ formatTime(item.time) }}</p>
+                <p><ion-icon :icon="card" /> € {{ formatPrice(item.price) }} per ticket</p>
+              </div>
+              
+              <ion-item lines="none" class="qty-item">
+                <ion-label>Aantal tickets</ion-label>
+                <ion-input 
+                  type="number" 
+                  v-model.number="item.qty" 
+                  min="1"
+                  class="qty-input"
+                />
               </ion-item>
-              <ion-button fill="clear" color="danger" @click="removeCartItem(item.concertId)">Verwijder</ion-button>
-            </div>
-          </ion-item>
+
+              <ion-button 
+                expand="block" 
+                fill="clear" 
+                color="danger" 
+                @click="removeCartItem(item.concertId)"
+              >
+                <ion-icon slot="start" :icon="trash" />
+                Verwijderen
+              </ion-button>
+            </ion-card-content>
+          </ion-card>
         </ion-list>
 
-        <div class="cart-summary">
-          <p>Totaal tickets: <strong>{{ cartItemCount }}</strong></p>
-          <p>Totaal bedrag: <strong>€ {{ formatPrice(cartTotal) }}</strong></p>
-        </div>
+        <ion-card v-if="cartItems.length > 0" class="summary-card">
+          <ion-card-content>
+            <div class="summary-row">
+              <span>Totaal tickets:</span>
+              <strong>{{ cartItemCount }}</strong>
+            </div>
+            <div class="summary-row total">
+              <span>Totaal bedrag:</span>
+              <strong>€ {{ formatPrice(cartTotal) }}</strong>
+            </div>
+          </ion-card-content>
+        </ion-card>
 
-        <ion-item>
-          <ion-label position="stacked">Kies bezoeker</ion-label>
-          <ion-select v-model="purchaseVisitorId" placeholder="Selecteer bezoeker">
-            <ion-select-option v-for="v in visitors" :key="v.id" :value="v.id">{{ v.first_name }} {{ v.last_name }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-button expand="block" fill="clear" @click="showQuickCreate = !showQuickCreate">Nieuwe bezoeker toevoegen</ion-button>
-        <div v-if="showQuickCreate" class="quick-create">
-          <ion-item>
-            <ion-input v-model="quickVisitor.first_name" placeholder="Voornaam"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input v-model="quickVisitor.last_name" placeholder="Achternaam"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input v-model="quickVisitor.birth_date" type="date" placeholder="Geboortedatum"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input v-model="quickVisitor.email" type="email" placeholder="E-mailadres"></ion-input>
-          </ion-item>
-          <div style="margin-top:12px">
-            <ion-button expand="block" @click="createVisitorQuick">Toevoegen & selecteren</ion-button>
-          </div>
-        </div>
+        <div v-if="cartItems.length > 0">
+          <ion-list>
+            <ion-list-header>
+              <ion-label>Selecteer bezoeker</ion-label>
+            </ion-list-header>
+            <ion-item>
+              <ion-select 
+                v-model="purchaseVisitorId" 
+                placeholder="Kies een bezoeker"
+                interface="action-sheet"
+              >
+                <ion-select-option v-for="v in visitors" :key="v.id" :value="v.id">
+                  {{ v.first_name }} {{ v.last_name }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-list>
 
-        <div style="margin-top:18px">
-          <ion-button expand="block" color="success" @click="handleCheckout">Koop tickets</ion-button>
+          <ion-button 
+            expand="block" 
+            fill="outline" 
+            @click="showQuickCreate = !showQuickCreate"
+            class="ion-margin-top"
+          >
+            <ion-icon slot="start" :icon="addCircleOutline" />
+            Nieuwe bezoeker toevoegen
+          </ion-button>
+
+          <ion-card v-if="showQuickCreate" class="quick-create-card">
+            <ion-card-header>
+              <ion-card-title>Snelle bezoeker toevoegen</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list>
+                <ion-item>
+                  <ion-input 
+                    v-model="quickVisitor.first_name" 
+                    label="Voornaam"
+                    label-placement="stacked"
+                    placeholder="Voornaam"
+                  />
+                </ion-item>
+                <ion-item>
+                  <ion-input 
+                    v-model="quickVisitor.last_name"
+                    label="Achternaam"
+                    label-placement="stacked"
+                    placeholder="Achternaam"
+                  />
+                </ion-item>
+                <ion-item>
+                  <ion-input 
+                    v-model="quickVisitor.birth_date"
+                    label="Geboortedatum"
+                    label-placement="stacked"
+                    type="date"
+                  />
+                </ion-item>
+                <ion-item>
+                  <ion-input 
+                    v-model="quickVisitor.email"
+                    label="Email"
+                    label-placement="stacked"
+                    type="email"
+                    placeholder="naam@voorbeeld.be"
+                  />
+                </ion-item>
+              </ion-list>
+              <ion-button expand="block" @click="createVisitorQuick" class="ion-margin-top">
+                <ion-icon slot="start" :icon="checkmarkCircle" />
+                Toevoegen en selecteren
+              </ion-button>
+            </ion-card-content>
+          </ion-card>
+
+          <ion-button 
+            expand="block" 
+            color="success" 
+            size="large"
+            @click="handleCheckout"
+            class="ion-margin-top"
+          >
+            <ion-icon slot="start" :icon="checkmarkCircle" />
+            Tickets kopen
+          </ion-button>
         </div>
       </ion-content>
     </ion-modal>
 
-      <!-- Purchase modal: choose visitor & quantity (opens when navigated here for purchase) -->
-      <ion-modal :is-open="purchaseModalOpen" @didDismiss="closePurchaseModal">
-        <ion-header>
-          <ion-toolbar color="primary">
-            <ion-title>Aankoop ticket</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="closePurchaseModal">Annuleren</ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <div v-if="purchaseConcert">
-            <h2 class="purchase-artist">{{ purchaseConcert.artist }}</h2>
-            <p>{{ purchaseConcert.venue }} — {{ formatDate(purchaseConcert.date) }} {{ formatTime(purchaseConcert.time) }}</p>
-            <p>Prijs per ticket: € {{ formatPrice(purchaseConcert.price) }}</p>
-          </div>
-
-          <ion-item>
-            <ion-label position="stacked">Kies bezoeker</ion-label>
-            <ion-select v-model="purchaseVisitorId" placeholder="Selecteer bezoeker">
-              <ion-select-option v-for="v in visitors" :key="v.id" :value="v.id">{{ v.first_name }} {{ v.last_name }}</ion-select-option>
-            </ion-select>
-          </ion-item>
-
-          <ion-item>
-            <ion-label position="stacked">Aantal tickets</ion-label>
-            <ion-input type="number" v-model.number="purchaseQuantity" min="1"></ion-input>
-          </ion-item>
-
-          <div style="margin-top:18px">
-            <ion-button expand="block" color="success" @click="handlePurchase">Bevestig aankoop</ion-button>
-          </div>
-        </ion-content>
-      </ion-modal>
-
-    </ion-content>
+    <ion-toast 
+      :is-open="toast.open" 
+      :message="toast.msg" 
+      :color="toast.color" 
+      :duration="2500"
+      position="top"
+      @didDismiss="toast.open = false"
+    />
   </ion-page>
 </template>
 
 <script setup>
-import { ref, inject, computed } from 'vue';
+import { ref, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonSelect, IonSelectOption } from '@ionic/vue';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel,
-  IonSpinner, onIonViewWillEnter, IonButtons, IonButton, IonIcon,
-  IonModal, IonInput, toastController, alertController, IonText, IonBadge
+  IonButtons, IonButton, IonIcon, IonModal, IonInput, IonSelect, IonSelectOption,
+  IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle,
+  IonBadge, IonChip, IonSearchbar, IonProgressBar, IonRefresher, IonRefresherContent,
+  IonItemGroup, IonRow, IonCol, IonFab, IonFabButton, IonListHeader, IonText, IonToast,
+  onIonViewWillEnter, alertController
 } from '@ionic/vue';
-import { add, pencil, trash } from 'ionicons/icons';
-
-const visitors = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const isModalOpen = ref(false);
-const newVisitorData = ref({ first_name: '', last_name: '', birth_date: '', email: '' });
-const editingVisitorId = ref(null);
-// purchase flow + cart (allow multiple concerts)
-const purchaseModalOpen = ref(false);
-const purchaseConcert = ref(null);
-const purchaseVisitorId = ref(null);
-const purchaseQuantity = ref(1);
-
-// cart to collect multiple concerts for one visitor
-const cart = ref([]); // items: { concertId, artist, venue, date, time, price, qty }
-const cartModalOpen = ref(false);
-
-const cartItemCount = computed(() => cart.value.reduce((s, it) => s + (it.qty || 0), 0));
-const cartTotal = computed(() => cart.value.reduce((s, it) => s + (Number(it.price || 0) * (it.qty || 1)), 0));
-
-const route = useRoute();
-const router = useRouter();
-// identity (simple): keep who is using the app
-const identityModalOpen = ref(false);
-const currentUser = ref(null);
-
-// quick-create visitor inside cart
-const showQuickCreate = ref(false);
-const quickVisitor = ref({ first_name: '', last_name: '', birth_date: '', email: '' });
-
-// restore identity from localStorage
-try { const raw = localStorage.getItem('odisee_current_user'); if (raw) currentUser.value = JSON.parse(raw); } catch(e) {}
-
-function formatDate(d) { if (!d) return ''; try { const [y,m,dd] = (''+d).split('-'); return `${dd}/${m}/${y}`; } catch(e){ return d; } }
-function formatTime(t) { if (!t) return ''; try { return (''+t).slice(0,5); } catch(e){ return t; } }
-function formatPrice(p) { const v = parseFloat(p ?? 0); return isNaN(v) ? '0.00' : v.toFixed(2); }
+import {
+  add, pencil, trash, person, cart, mail, calendar, checkmarkCircle,
+  personCircle, schoolOutline, cartOutline, addCircleOutline, card as cardIcon
+} from 'ionicons/icons';
 
 const axios = inject('axios');
+const route = useRoute();
+const router = useRouter();
 
-// identity modal temps
+// State variables - style prof: ref() simples
+const visitors = ref([]);
+const filteredVisitors = ref([]);
+const loading = ref(false);
+const saving = ref(false);
+const error = ref(null);
+const isModalOpen = ref(false);
+const showErrors = ref(false);
+const searchText = ref('');
+const newVisitorData = ref({ first_name: '', last_name: '', birth_date: '', email: '' });
+const editingVisitorId = ref(null);
+
+const cartItems = ref([]);
+const cartModalOpen = ref(false);
+const purchaseVisitorId = ref(null);
+const cartItemCount = ref(0);
+const cartTotal = ref(0);
+
+const identityModalOpen = ref(false);
+const currentUser = ref(null);
 const currentUserTemp = ref(null);
 const profName = ref('');
 
-function openIdentityModal() { currentUserTemp.value = null; profName.value = ''; identityModalOpen.value = true; }
+const showQuickCreate = ref(false);
+const quickVisitor = ref({ first_name: '', last_name: '', birth_date: '', email: '' });
+
+const toast = ref({ open: false, msg: '', color: 'success' });
+
+// Restore identity from localStorage
+try {
+  const raw = localStorage.getItem('odisee_current_user');
+  if (raw) {
+    currentUser.value = JSON.parse(raw);
+  }
+} catch (e) {
+  console.log('localStorage error:', e);
+}
+
+// Helper functions - style prof: fonctions simples
+function formatDate(d) {
+  if (!d) return '';
+  const parts = String(d).split('-');
+  if (parts.length !== 3) return d;
+  return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  return String(t).slice(0, 5);
+}
+
+function formatPrice(p) {
+  const v = parseFloat(p);
+  if (isNaN(v)) return '0.00';
+  return v.toFixed(2);
+}
+
+function showToast(message, color) {
+  toast.value.open = true;
+  toast.value.msg = message;
+  toast.value.color = color;
+}
+
+// Filter visitors - style prof: boucle for simple
+function filterVisitors() {
+  const term = searchText.value.trim().toLowerCase();
+  
+  // vider d'abord la liste
+  filteredVisitors.value = [];
+  
+  if (!term) {
+    // pas de filtre, tout montrer
+    for (let i = 0, end = visitors.value.length; i < end; i++) {
+      filteredVisitors.value.push(visitors.value[i]);
+    }
+    return;
+  }
+  
+  // loop door alle bezoekers
+  for (let i = 0, end = visitors.value.length; i < end; i++) {
+    const v = visitors.value[i];
+    const fullName = (v.first_name + ' ' + v.last_name).toLowerCase();
+    const email = (v.email || '').toLowerCase();
+    
+    if (fullName.includes(term) || email.includes(term)) {
+      filteredVisitors.value.push(v);
+    }
+  }
+}
+
+// Calculate cart totals - style prof: loop simple
+function updateCartTotals() {
+  let count = 0;
+  let total = 0;
+  
+  for (let i = 0, end = cartItems.value.length; i < end; i++) {
+    const item = cartItems.value[i];
+    const qty = item.qty || 0;
+    const price = Number(item.price) || 0;
+    
+    count = count + qty;
+    total = total + (price * qty);
+  }
+  
+  cartItemCount.value = count;
+  cartTotal.value = total;
+}
+
+function openAddModal() {
+  showErrors.value = false;
+  editingVisitorId.value = null;
+  newVisitorData.value = { first_name: '', last_name: '', birth_date: '', email: '' };
+  isModalOpen.value = true;
+}
+
+function openEditModal(visitor) {
+  showErrors.value = false;
+  editingVisitorId.value = visitor.id;
+  newVisitorData.value = {
+    first_name: visitor.first_name,
+    last_name: visitor.last_name,
+    birth_date: visitor.birth_date,
+    email: visitor.email
+  };
+  isModalOpen.value = true;
+}
+
+function closeModal() {
+  isModalOpen.value = false;
+  editingVisitorId.value = null;
+}
+
+function openIdentityModal() {
+  currentUserTemp.value = null;
+  profName.value = '';
+  identityModalOpen.value = true;
+}
 
 function saveCurrentUser(u) {
   currentUser.value = u;
-  try { localStorage.setItem('odisee_current_user', JSON.stringify(u)); } catch(e) {}
+  try {
+    localStorage.setItem('odisee_current_user', JSON.stringify(u));
+  } catch (e) {
+    console.log('localStorage save error:', e);
+  }
 }
 
 function applyIdentity() {
   if (profName.value && profName.value.trim()) {
-    saveCurrentUser({ type: 'prof', name: profName.value.trim() });
-    showToastMessage(`Hey mnr, aangemeld als tester: ${profName.value}`,'success');
+    // professor/tester
+    const user = { type: 'prof', name: profName.value.trim() };
+    saveCurrentUser(user);
+    showToast('Aangemeld als ' + profName.value, 'success');
+    identityModalOpen.value = false;
   } else if (currentUserTemp.value) {
+    // bezoeker
     saveCurrentUser(currentUserTemp.value);
-    showToastMessage(`Aangemeld als ${currentUserTemp.value.name}`,'success');
+    showToast('Welkom ' + currentUserTemp.value.name + '!', 'success');
+    identityModalOpen.value = false;
   } else {
-    showToastMessage('Selecteer bezoeker of vul professor naam in.', 'warning');
-    return;
+    showToast('Selecteer een bezoeker of vul je naam in', 'warning');
   }
-  identityModalOpen.value = false;
 }
 
-const openAddModal = () => {
-  editingVisitorId.value = null;
-  newVisitorData.value = { first_name: '', last_name: '', birth_date: '', email: '' };
-  isModalOpen.value = true;
-};
-
-const openEditModal = (visitor) => {
-  editingVisitorId.value = visitor.id;
-  newVisitorData.value = { ...visitor };
-  isModalOpen.value = true;
-};
-
-const closeModal = () => {
-  isModalOpen.value = false;
-  editingVisitorId.value = null;
-};
-
-const showToastMessage = async (message, color = 'dark', duration = 2000) => {
-    const toast = await toastController.create({ message, duration, color, position: 'bottom' });
-    await toast.present();
-};
-
-const loadVisitors = async () => {
+// Load visitors - style prof: simpele axios call
+function loadVisitors() {
   loading.value = true;
   error.value = null;
-  if (!axios) { error.value = "Axios error."; loading.value = false; return; }
-  try {
-    const response = await axios.get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php'); //
-    if (response.data && Array.isArray(response.data.data)) {
-      visitors.value = response.data.data;
-    } else { error.value = "Geen data."; console.warn("API response:", response.data); }
-  } catch (e) { console.error("API Error:", e); error.value = "Laden mislukt.";
-  } finally { loading.value = false; }
-};
-
-const handleSaveVisitor = async () => {
-  if (!axios) { showToastMessage("Axios niet beschikbaar.", 'danger'); return; }
   
-  if (!newVisitorData.value.first_name || !newVisitorData.value.last_name || !newVisitorData.value.email || !newVisitorData.value.birth_date) {
-      showToastMessage("Gelieve alle velden in te vullen.", 'warning');
-      return;
-  }
-  
-  try {
-    let response;
-    let successMessage = '';
-    if (editingVisitorId.value) {
-      const dataToUpdate = { ...newVisitorData.value, id: editingVisitorId.value };
-      response = await axios.put('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', dataToUpdate); //
-      successMessage = response.data.message || 'Bezoeker bijgewerkt!';
-    } else {
-      response = await axios.post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', newVisitorData.value); //
-      successMessage = response.data.message || 'Bezoeker toegevoegd!';
-    }
-    showToastMessage(successMessage, 'success');
-    closeModal();
-    loadVisitors();
-  } catch (err) {
-    console.error("Fout bij opslaan:", err);
-    showToastMessage(err.response?.data?.message || err.message || 'Opslaan mislukt.', 'danger', 3000);
-  }
-};
+  axios
+    .get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php')
+    .then(response => {
+      // controleer de response
+      if (response.status !== 200) {
+        console.log('Status niet 200:', response.status);
+        error.value = 'Laden mislukt';
+        loading.value = false;
+        return;
+      }
+      
+      // check of data er is
+      const data = response.data.data;
+      if (!data || !Array.isArray(data)) {
+        console.log('Data is geen array');
+        error.value = 'Geen data';
+        loading.value = false;
+        return;
+      }
+      
+      // vul de visitors array
+      visitors.value = [];
+      for (let i = 0, end = data.length; i < end; i++) {
+        visitors.value.push(data[i]);
+      }
+      
+      // filter toepassen
+      filterVisitors();
+      
+      loading.value = false;
+    })
+    .catch(e => {
+      console.error('API Error:', e);
+      error.value = 'Er ging iets mis bij het laden';
+      showToast('Laden mislukt', 'danger');
+      loading.value = false;
+    });
+}
 
-const handleDeleteVisitor = async (visitorId) => {
-  if (!axios) { showToastMessage("Axios niet beschikbaar.", 'danger'); return; }
+function handleRefresh(event) {
+  loadVisitors();
+  event.target.complete();
+}
+
+function handleSaveVisitor() {
+  showErrors.value = true;
+  
+  // validatie
+  if (!newVisitorData.value.first_name || !newVisitorData.value.first_name.trim()) {
+    showToast('Vul de voornaam in', 'warning');
+    return;
+  }
+  if (!newVisitorData.value.last_name || !newVisitorData.value.last_name.trim()) {
+    showToast('Vul de achternaam in', 'warning');
+    return;
+  }
+  if (!newVisitorData.value.email || !newVisitorData.value.email.trim()) {
+    showToast('Vul het e-mailadres in', 'warning');
+    return;
+  }
+  if (!newVisitorData.value.birth_date) {
+    showToast('Selecteer een geboortedatum', 'warning');
+    return;
+  }
+
+  saving.value = true;
+
+  if (editingVisitorId.value) {
+    // update bezoeker
+    const dataToUpdate = {
+      id: editingVisitorId.value,
+      first_name: newVisitorData.value.first_name,
+      last_name: newVisitorData.value.last_name,
+      birth_date: newVisitorData.value.birth_date,
+      email: newVisitorData.value.email
+    };
+    
+    axios
+      .put('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', dataToUpdate)
+      .then(response => {
+        showToast('Bezoeker succesvol gewijzigd', 'success');
+        closeModal();
+        loadVisitors();
+        saving.value = false;
+      })
+      .catch(e => {
+        console.error('Update error:', e);
+        showToast('Wijzigen mislukt', 'danger');
+        saving.value = false;
+      });
+  } else {
+    // nieuwe bezoeker
+    axios
+      .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', newVisitorData.value)
+      .then(response => {
+        showToast('Bezoeker succesvol toegevoegd', 'success');
+        closeModal();
+        loadVisitors();
+        saving.value = false;
+      })
+      .catch(e => {
+        console.error('Create error:', e);
+        showToast('Toevoegen mislukt', 'danger');
+        saving.value = false;
+      });
+  }
+}
+
+async function handleDeleteVisitor(visitorId) {
   const alert = await alertController.create({
-    header: 'Bevestigen',
-    message: 'Weet u zeker dat u deze bezoeker wilt verwijderen?',
+    header: 'Bezoeker verwijderen?',
+    message: 'Deze actie kan niet ongedaan worden gemaakt.',
     buttons: [
-      { text: 'Annuleren', role: 'cancel' },
+      {
+        text: 'Annuleren',
+        role: 'cancel'
+      },
       {
         text: 'Verwijderen',
         role: 'destructive',
-        handler: async () => {
-          try {
-            const response = await axios.delete('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', {
-              data: { id: visitorId } //
+        handler: () => {
+          axios
+            .delete('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', {
+              data: { id: visitorId }
+            })
+            .then(response => {
+              showToast('Bezoeker verwijderd', 'medium');
+              loadVisitors();
+            })
+            .catch(e => {
+              console.error('Delete error:', e);
+              showToast('Verwijderen mislukt', 'danger');
             });
-            showToastMessage(response.data.message || 'Bezoeker verwijderd!', 'success');
-            loadVisitors();
-          } catch (err) {
-            console.error("Fout bij verwijderen:", err);
-            showToastMessage(err.response?.data?.message || err.message || 'Verwijderen mislukt.', 'danger', 3000);
-          }
         }
       }
     ]
   });
   await alert.present();
-};
+}
 
-onIonViewWillEnter(() => {
-  loadVisitors();
-  // If navigated here with purchase action, add to cart and open cart modal so user can add multiple concerts
-  if ((route.query.action === 'purchase' || route.query.action === 'addToCart') && route.query.concertId) {
-    addToCartFromQuery();
-    cartModalOpen.value = true;
+// Cart functions - style prof
+function addToCart(item, qty) {
+  const id = String(item.id || item.concertId || item.concert_id);
+  
+  // zoek of item al in winkelwagen zit
+  let found = false;
+  for (let i = 0, end = cartItems.value.length; i < end; i++) {
+    if (String(cartItems.value[i].concertId) === id) {
+      cartItems.value[i].qty = (cartItems.value[i].qty || 0) + qty;
+      found = true;
+      break;
+    }
   }
-});
-
-function addToCart(item, qty = 1) {
-  const id = String(item.id ?? item.concertId ?? item.concert_id ?? item.concertId);
-  const existing = cart.value.find(x => String(x.concertId) === id);
-  if (existing) {
-    existing.qty = (existing.qty || 0) + qty;
-  } else {
-    cart.value.push({ concertId: id, artist: item.artist, venue: item.venue, date: item.date, time: item.time, price: item.price, qty });
+  
+  if (!found) {
+    // nieuw item toevoegen
+    cartItems.value.push({
+      concertId: id,
+      artist: item.artist,
+      venue: item.venue,
+      date: item.date,
+      time: item.time,
+      price: item.price,
+      qty: qty
+    });
   }
+  
+  updateCartTotals();
 }
 
 function addToCartFromQuery() {
@@ -416,103 +798,338 @@ function addToCartFromQuery() {
     };
     const qty = q.qty ? Number(q.qty) : 1;
     addToCart(item, qty);
-    // clear query so back/refresh doesn't re-add
+    // clear query
     router.replace({ path: route.path, query: {} });
-  } catch (e) { console.warn('addToCartFromQuery error', e); }
+  } catch (e) {
+    console.log('addToCartFromQuery error:', e);
+  }
 }
 
-function openCartModal() { cartModalOpen.value = true; }
-function closeCartModal() { cartModalOpen.value = false; }
+function openCartModal() {
+  cartModalOpen.value = true;
+}
+
+function closeCartModal() {
+  cartModalOpen.value = false;
+}
 
 function removeCartItem(concertId) {
-  const idx = cart.value.findIndex(x => String(x.concertId) === String(concertId));
-  if (idx >= 0) cart.value.splice(idx, 1);
-}
-
-async function handleCheckout() {
-  if (!purchaseVisitorId.value) { showToastMessage('Selecteer een bezoeker.', 'warning'); return; }
-  if (cart.value.length === 0) { showToastMessage('Winkelwagen is leeg.', 'warning'); return; }
-  if (!axios) { showToastMessage('Axios niet beschikbaar.', 'danger'); return; }
-  try {
-    // send one request per cart item (backend may accept batch; adapt if needed)
-    for (const it of cart.value) {
-      const payload = { visitor_id: purchaseVisitorId.value, concert_id: it.concertId, quantity: it.qty };
-      try {
-        await axios.post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php', payload);
-      } catch (apiErr) {
-        console.warn('Ticket API error for item', it, apiErr);
-        // continue trying other items but notify user at end
-      }
+  const id = String(concertId);
+  
+  // zoek index van item
+  let indexToRemove = -1;
+  for (let i = 0, end = cartItems.value.length; i < end; i++) {
+    if (String(cartItems.value[i].concertId) === id) {
+      indexToRemove = i;
+      break;
     }
-    showToastMessage('Aankoop voltooid!', 'success');
-    // clear cart after purchase
-    cart.value = [];
-    purchaseVisitorId.value = null;
-    purchaseQuantity.value = 1;
-    closeCartModal();
-  } catch (err) {
-    console.error('Checkout error', err);
-    showToastMessage('Aankoop mislukt.', 'danger');
+  }
+  
+  if (indexToRemove >= 0) {
+    cartItems.value.splice(indexToRemove, 1);
+    updateCartTotals();
   }
 }
+function createVisitorQuick() {
+  // validatie
+  if (!quickVisitor.value.first_name || !quickVisitor.value.last_name || 
+      !quickVisitor.value.birth_date || !quickVisitor.value.email) {
+    showToast('Vul alle velden in', 'warning');
+    return;
+  }
 
-const closePurchaseModal = () => {
-  purchaseModalOpen.value = false;
-  purchaseConcert.value = null;
-  purchaseVisitorId.value = null;
-  purchaseQuantity.value = 1;
-  // clear query params so returning to this page doesn't re-open modal
-  router.replace({ path: route.path, query: {} });
-};
+  axios
+    .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', quickVisitor.value)
+    .then(response => {
+      showToast('Bezoeker toegevoegd!', 'success');
+      loadVisitors();
+      
+      // selecteer de nieuwe bezoeker
+      if (response.data && response.data.id) {
+        purchaseVisitorId.value = response.data.id;
+      }
+      
+      showQuickCreate.value = false;
+      quickVisitor.value = { first_name: '', last_name: '', birth_date: '', email: '' };
+    })
+    .catch(e => {
+      console.error('Quick create error:', e);
+      showToast('Toevoegen mislukt', 'danger');
+    });
+}
 
-const handlePurchase = async () => {
-  if (!purchaseVisitorId.value) { showToastMessage('Selecteer een bezoeker.', 'warning'); return; }
-  if (!purchaseQuantity.value || purchaseQuantity.value < 1) { showToastMessage('Voer een geldig aantal in.', 'warning'); return; }
-  // try call tickets API if available
-  if (!axios) { showToastMessage('Axios niet beschikbaar.', 'danger'); return; }
-  try {
+function handleCheckout() {
+  // validatie
+  if (!purchaseVisitorId.value) {
+    showToast('Selecteer een bezoeker', 'warning');
+    return;
+  }
+  
+  if (cartItems.value.length === 0) {
+    showToast('Winkelwagen is leeg', 'warning');
+    return;
+  }
+
+  // loop door alle items en verstuur ze
+  for (let i = 0, end = cartItems.value.length; i < end; i++) {
+    const item = cartItems.value[i];
     const payload = {
       visitor_id: purchaseVisitorId.value,
-      concert_id: purchaseConcert.value.id,
-      quantity: purchaseQuantity.value
+      concert_id: item.concertId,
+      quantity: item.qty
     };
-    // best-effort call; if endpoint missing, simulate
-    try {
-      const res = await axios.post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php', payload);
-      showToastMessage(res.data?.message || 'Aankoop voltooid!', 'success');
-    } catch (apiErr) {
-      console.warn('Tickets API call failed, simulating purchase.', apiErr);
-      showToastMessage('Aankoop gesimuleerd (server niet beschikbaar).', 'success');
-    }
-    closePurchaseModal();
-  } catch (err) {
-    console.error('Purchase error', err);
-    showToastMessage('Aankoop mislukt.', 'danger');
+    
+    axios
+      .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php', payload)
+      .then(response => {
+        console.log('Ticket gekocht:', response.data);
+      })
+      .catch(e => {
+        console.log('Ticket API error voor item:', item, e);
+      });
   }
-};
+  
+  showToast('Tickets succesvol gekocht!', 'success');
+  
+  // leeg winkelwagen
+  cartItems.value = [];
+  purchaseVisitorId.value = null;
+  updateCartTotals();
+  closeCartModal();
+}
+
+// Lifecycle - style prof
+onIonViewWillEnter(() => {
+  loadVisitors();
+  
+  // check if purchase action from query
+  if ((route.query.action === 'purchase' || route.query.action === 'addToCart') && route.query.concertId) {
+    addToCartFromQuery();
+    cartModalOpen.value = true;
+  }
+});
 </script>
 
 <style scoped>
-ion-modal ion-content {
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --padding-top: 16px;
-  --padding-bottom: 16px;
-}
-.button-group {
-  display: flex;
-  align-items: center;
-  gap: 0px;
-}
-ion-item h2 {
- font-size: 1.1em;
- font-weight: 600;
-}
-ion-item p {
- font-size: 0.9em;
- color: var(--ion-color-medium-shade);
+ion-content {
+  --padding-bottom: 80px;
 }
 
-.cart-badge { margin-left:6px; background: var(--ion-color-primary-tint); color: white; font-weight:700; }
-.cart-summary { margin-top:12px; font-weight:700; }
+.welcome-card {
+  padding: 12px 16px 8px;
+}
+
+.intro-text {
+  font-size: 15px;
+  color: var(--ion-color-medium-shade);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.search-bar {
+  padding: 8px 16px;
+  --border-radius: 12px;
+  --box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.visitor-card {
+  margin: 12px 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+.visitor-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ion-color-dark);
+}
+
+.info-list {
+  background: transparent;
+  padding: 0;
+}
+
+.info-list ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --min-height: 48px;
+  margin-bottom: 8px;
+}
+
+.label-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.info-list h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin: 4px 0 0 0;
+}
+
+.card-actions {
+  padding: 0 16px 12px;
+  gap: 8px;
+}
+
+.card-actions ion-button {
+  font-weight: 600;
+  font-size: 15px;
+  --border-width: 2px;
+}
+
+ion-fab-button {
+  --box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+ion-modal ion-list {
+  background: transparent;
+  padding: 8px 0;
+}
+
+ion-modal ion-item {
+  --background: var(--ion-color-light);
+  --border-radius: 12px;
+  margin-bottom: 16px;
+  --padding-start: 16px;
+}
+
+ion-input {
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  font-size: 16px;
+}
+
+ion-input.ion-invalid {
+  --highlight-color-invalid: var(--ion-color-danger);
+}
+
+ion-chip {
+  font-weight: 600;
+  margin: 8px;
+}
+
+.identity-intro {
+  font-size: 16px;
+  text-align: center;
+  color: var(--ion-color-medium-shade);
+  margin: 0;
+}
+
+.divider {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.divider p {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.empty-cart {
+  margin-top: 20px;
+}
+
+.empty-cart ion-icon {
+  font-size: 64px;
+  margin-bottom: 12px;
+}
+
+.empty-cart p {
+  margin: 8px 0;
+  color: var(--ion-color-medium-shade);
+}
+
+.small-text {
+  font-size: 14px;
+}
+
+.cart-item {
+  margin-bottom: 16px;
+  border-radius: 16px;
+}
+
+.cart-item-details {
+  margin: 12px 0;
+}
+
+.cart-item-details p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 15px;
+}
+
+.cart-item-details ion-icon {
+  color: var(--ion-color-primary);
+}
+
+.qty-item {
+  --background: var(--ion-color-light);
+  --border-radius: 8px;
+  margin: 12px 0;
+  --padding-start: 12px;
+}
+
+.qty-input {
+  text-align: right;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.summary-card {
+  margin: 16px 0;
+  border-radius: 12px;
+  background: var(--ion-color-light);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 16px;
+}
+
+.summary-row.total {
+  padding-top: 12px;
+  border-top: 2px solid var(--ion-color-medium);
+  margin-top: 8px;
+  font-size: 20px;
+}
+
+.summary-row strong {
+  color: var(--ion-color-primary);
+}
+
+.summary-row.total strong {
+  color: var(--ion-color-success);
+  font-size: 24px;
+}
+
+.quick-create-card {
+  margin-top: 16px;
+  border-radius: 12px;
+}
+
+ion-list-header {
+  font-weight: 700;
+  font-size: 16px;
+  padding: 16px 0 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .visitor-card,
+  .cart-item,
+  .summary-card,
+  .quick-create-card {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+}
 </style>
