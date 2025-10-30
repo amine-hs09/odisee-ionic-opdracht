@@ -148,10 +148,9 @@ import {
   IonDatetime, IonDatetimeButton, IonSearchbar, IonSegment, IonSegmentButton,
   IonRefresher, IonRefresherContent, IonSkeletonText, IonCard, IonCardHeader,
   IonCardContent, IonCardTitle, IonFab, IonFabButton, IonItemSliding, IonItemOptions,
-  IonItemOption, onIonViewWillEnter, alertController, IonListHeader
+   IonItemOption, onIonViewWillEnter, alertController, IonListHeader, IonBadge
 } from '@ionic/vue';
 import { add, pencil, trash } from 'ionicons/icons';
-import { IonBadge } from '@ionic/vue';
 import { useRouter } from 'vue-router';
 
 const injectedAxios = inject('axios'); // try injected axios (if app configured)
