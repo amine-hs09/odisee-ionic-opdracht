@@ -18,21 +18,24 @@
         <ion-card-content>
           <form @submit.prevent="handleBuyTicket">
             <ion-item>
-              <ion-select label="Kies Bezoeker" label-placement="stacked" v-model="newTicketData.visitor_id" required interface="alert" placeholder="Selecteer een bezoeker">
+              <ion-select label="Kies Bezoeker" label-placement="stacked" v-model="newTicketData.visitor_id" required
+                interface="alert" placeholder="Selecteer een bezoeker">
                 <ion-select-option v-for="visitor in allVisitors" :key="visitor.id" :value="visitor.id">
                   {{ visitor.first_name }} {{ visitor.last_name }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-select label="Kies Concert" label-placement="stacked" v-model="newTicketData.concert_id" required interface="alert" placeholder="Selecteer een concert">
+              <ion-select label="Kies Concert" label-placement="stacked" v-model="newTicketData.concert_id" required
+                interface="alert" placeholder="Selecteer een concert">
                 <ion-select-option v-for="concert in allConcerts" :key="concert.id" :value="concert.id">
                   {{ concert.artist }} - {{ concert.venue }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-input label="Aantal Tickets" label-placement="stacked" type="number" min="1" v-model.number="newTicketData.qty" required placeholder="1"></ion-input>
+              <ion-input label="Aantal Tickets" label-placement="stacked" type="number" min="1"
+                v-model.number="newTicketData.qty" required placeholder="1"></ion-input>
             </ion-item>
             <ion-button type="submit" expand="block" class="ion-margin-top">Koop Ticket</ion-button>
           </form>
@@ -40,7 +43,7 @@
       </ion-card>
 
       <ion-text color="medium" class="ion-padding-start ion-padding-end">
-         <p>Hieronder ziet u de lijst met reeds gekochte tickets.</p>
+        <p>Hieronder ziet u de lijst met reeds gekochte tickets.</p>
       </ion-text>
 
       {/* Liste des tickets (existante) */}
@@ -59,10 +62,11 @@
             <p>Concert: {{ ticket.artist }} ({{ ticket.venue }})</p>
             <p>Aantal: {{ ticket.qty }}</p>
           </ion-label>
-           <div slot="end" class="button-group">
-            {/* Bouton Supprimer pour les tickets */}
-            <ion-button fill="clear" color="danger" size="small" @click="handleDeleteTicket(ticket.id)" aria-label="Verwijder ticket">
-               <ion-icon slot="icon-only" :icon="trash"></ion-icon>
+          <div slot="end" class="button-group">
+            
+            <ion-button fill="clear" color="danger" size="small" @click="handleDeleteTicket(ticket.id)"
+              aria-label="Verwijder ticket">
+              <ion-icon slot="icon-only" :icon="trash"></ion-icon>
             </ion-button>
           </div>
         </ion-item>
@@ -96,15 +100,15 @@ const newTicketData = ref({ visitor_id: null, concert_id: null, qty: 1 });
 const axios = inject('axios');
 
 const showToastMessage = async (message, color = 'dark', duration = 2000) => {
-    const toast = await toastController.create({ message, duration, color, position: 'bottom' });
-    await toast.present();
+  const toast = await toastController.create({ message, duration, color, position: 'bottom' });
+  await toast.present();
 };
 
 const loadInitialData = async () => {
   loading.value = true;
   error.value = null;
   if (!axios) { error.value = "Axios error."; loading.value = false; return; }
-  
+
   try {
     // Charger les 3 listes en parallèle
     const [ticketsRes, visitorsRes, concertsRes] = await Promise.all([
@@ -116,7 +120,7 @@ const loadInitialData = async () => {
     if (ticketsRes.data && Array.isArray(ticketsRes.data.data)) {
       tickets.value = ticketsRes.data.data;
     } else { console.warn("Tickets API response:", ticketsRes.data); }
-    
+
     if (visitorsRes.data && Array.isArray(visitorsRes.data.data)) {
       allVisitors.value = visitorsRes.data.data;
     } else { console.warn("Visitors API response:", visitorsRes.data); }
@@ -135,22 +139,22 @@ const loadInitialData = async () => {
 
 const handleBuyTicket = async () => {
   if (!axios) { showToastMessage("Axios niet beschikbaar.", 'danger'); return; }
-  
+
   if (!newTicketData.value.visitor_id || !newTicketData.value.concert_id || newTicketData.value.qty < 1) {
-      showToastMessage("Gelieve alle velden correct in te vullen.", 'warning');
-      return;
+    showToastMessage("Gelieve alle velden correct in te vullen.", 'warning');
+    return;
   }
-  
+
   try {
     const response = await axios.post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php', newTicketData.value); //
     showToastMessage(response.data.message || 'Ticket gekocht!', 'success');
-    
+
     // Reset formulaire
     newTicketData.value = { visitor_id: null, concert_id: null, qty: 1 };
-    
+
     // Herlaad enkel de ticketlijst (sneller dan alles)
-    loadTicketsListOnly(); 
-    
+    loadTicketsListOnly();
+
   } catch (err) {
     console.error("Fout bij kopen ticket:", err);
     showToastMessage(err.response?.data?.message || err.message || 'Aankoop mislukt.', 'danger', 3000);
@@ -159,15 +163,15 @@ const handleBuyTicket = async () => {
 
 // Fonction séparée pour juste rafraîchir les tickets (après achat/delete)
 const loadTicketsListOnly = async () => {
-    if (!axios) return;
-    try {
-        const ticketsRes = await axios.get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php'); //
-        if (ticketsRes.data && Array.isArray(ticketsRes.data.data)) {
-            tickets.value = ticketsRes.data.data;
-        }
-    } catch (e) {
-        console.error("Fout bij herladen tickets:", e);
+  if (!axios) return;
+  try {
+    const ticketsRes = await axios.get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php'); //
+    if (ticketsRes.data && Array.isArray(ticketsRes.data.data)) {
+      tickets.value = ticketsRes.data.data;
     }
+  } catch (e) {
+    console.error("Fout bij herladen tickets:", e);
+  }
 };
 
 const handleDeleteTicket = async (ticketId) => {
@@ -210,12 +214,14 @@ onIonViewWillEnter(() => {
   align-items: center;
   gap: 0px;
 }
+
 ion-item h2 {
- font-size: 1.1em;
- font-weight: 600;
+  font-size: 1.1em;
+  font-weight: 600;
 }
+
 ion-item p {
- font-size: 0.9em;
- color: var(--ion-color-medium-shade);
+  font-size: 0.9em;
+  color: var(--ion-color-medium-shade);
 }
 </style>
