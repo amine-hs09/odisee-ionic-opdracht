@@ -569,7 +569,7 @@ function saveConcert() {
       });
   }
 }
-
+//zzzzzzzz
 async function confirmDelete(id) {
   const alert = await alertController.create({
     header: 'Concert verwijderen?',
