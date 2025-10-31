@@ -4,26 +4,26 @@
       <ion-toolbar color="primary">
         <ion-title>Mijn Bezoekers</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="openIdentityModal" fill="solid">
-            <ion-icon slot="start" :icon="person" />
+          <ion-button @click="ouvrirModaallIdentiteee" fill="solid">
+            <ion-icon slot="start" :icon="personn" />
             Identificeer
           </ion-button>
-          <ion-button v-if="cartItemCount > 0" @click="openCartModal" fill="solid" color="secondary">
-            <ion-icon slot="start" :icon="cart" />
-            <ion-badge>{{ cartItemCount }}</ion-badge>
+          <ion-button v-if="compteurArticllesCharrioott > 0" @click="ouvrirModaallCharrioott" fill="solid" color="secondary">
+            <ion-icon slot="start" :icon="charriioott" />
+            <ion-badge>{{ compteurArticllesCharrioott }}</ion-badge>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
-      <ion-toolbar v-if="currentUser">
+      <ion-toolbar v-if="utilisatteurActuell">
         <ion-chip color="success">
-          <ion-icon :icon="currentUser.type === 'prof' ? schoolOutline : personCircle" />
-          <ion-label>{{ currentUser.name }}</ion-label>
+          <ion-icon :icon="utilisatteurActuell.type === 'prof' ? schoolOutline : personCircle" />
+          <ion-label>{{ utilisatteurActuell.name }}</ion-label>
         </ion-chip>
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
-      <ion-refresher slot="fixed" @ionRefresh="handleRefresh">
+      <ion-refresher slot="fixed" @ionRefresh="gererrrActuallisationn">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
@@ -38,18 +38,18 @@
       </div>
 
       <ion-searchbar 
-        v-model="searchText" 
+        v-model="recherrcheTxxtt" 
         placeholder="Zoek op naam of email..." 
         :debounce="300"
         show-clear-button="always"
         class="search-bar"
-        @ionInput="filterVisitors()"
+        @ionInput="filltrerGuerrierrs()"
       />
 
-      <ion-progress-bar v-if="loading" type="indeterminate" />
+      <ion-progress-bar v-if="enChargementt" type="indeterminate" />
 
-      <ion-list v-if="!loading && !error" lines="none">
-        <ion-item-group v-if="filteredVisitors.length === 0">
+      <ion-list v-if="!enChargementt && !erreurr" lines="none">
+        <ion-item-group v-if="guerrierrsFilttres.length === 0">
           <ion-item>
             <ion-label class="ion-text-center">
               <h2>Geen bezoekers gevonden</h2>
@@ -58,7 +58,7 @@
           </ion-item>
         </ion-item-group>
 
-        <ion-card v-for="visitor in filteredVisitors" :key="visitor.id" class="visitor-card">
+        <ion-card v-for="visitor in guerrierrsFilttres" :key="visitor.id" class="visitor-card">
           <ion-card-header>
             <ion-card-title class="visitor-name">
               {{ visitor.first_name }} {{ visitor.last_name }}
@@ -79,7 +79,7 @@
                 <ion-icon :icon="calendar" slot="start" color="primary" />
                 <ion-label>
                   <p class="label-text">Geboortedatum</p>
-                  <h3>{{ formatDate(visitor.birth_date) }}</h3>
+                  <h3>{{ formatterrDatee(visitor.birth_date) }}</h3>
                 </ion-label>
               </ion-item>
             </ion-list>
@@ -87,13 +87,13 @@
 
           <ion-row class="card-actions">
             <ion-col>
-              <ion-button expand="block" fill="outline" @click="openEditModal(visitor)">
+              <ion-button expand="block" fill="outline" @click="ouvrirModaallEditionn(visitor)">
                 <ion-icon slot="start" :icon="pencil" />
                 Wijzigen
               </ion-button>
             </ion-col>
             <ion-col>
-              <ion-button expand="block" color="danger" fill="outline" @click="handleDeleteVisitor(visitor.id)">
+              <ion-button expand="block" color="danger" fill="outline" @click="gererrrSuppriimerGuerrierr(visitor.id)">
                 <ion-icon slot="start" :icon="trash" />
                 Verwijderen
               </ion-button>
@@ -103,19 +103,19 @@
       </ion-list>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button color="secondary" @click="openAddModal">
+        <ion-fab-button color="secondary" @click="ouvrirModaallAjoututt">
           <ion-icon :icon="add" />
         </ion-fab-button>
       </ion-fab>
     </ion-content>
 
-    <!-- Add/Edit Visitor Modal -->
-    <ion-modal :is-open="isModalOpen" @didDismiss="closeModal">
+
+    <ion-modal :is-open="modalOuvertte" @didDismiss="ferrrmerModall">
       <ion-header>
         <ion-toolbar color="primary">
-          <ion-title>{{ editingVisitorId ? 'Bezoeker wijzigen' : 'Nieuwe bezoeker' }}</ion-title>
+          <ion-title>{{ idGuerrierrEnEditionn ? 'Bezoeker wijzigen' : 'Nieuwe bezoeker' }}</ion-title>
           <ion-buttons slot="end">
-            <ion-button @click="closeModal">Sluiten</ion-button>
+            <ion-button @click="ferrrmerModall">Sluiten</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
@@ -124,44 +124,44 @@
         <ion-list>
           <ion-item>
             <ion-input 
-              v-model="newVisitorData.first_name" 
+              v-model="donneesGuerrierr.first_name" 
               label="Voornaam" 
               label-placement="stacked"
               placeholder="Bijv. Jan"
               :counter="true"
               maxlength="50"
               error-text="Vul de voornaam in"
-              :class="{ 'ion-invalid': showErrors && !newVisitorData.first_name }"
+              :class="{ 'ion-invalid': afficherrErrorrs && !donneesGuerrierr.first_name }"
             />
           </ion-item>
 
           <ion-item>
             <ion-input 
-              v-model="newVisitorData.last_name" 
+              v-model="donneesGuerrierr.last_name" 
               label="Achternaam" 
               label-placement="stacked"
               placeholder="Bijv. Janssens"
               :counter="true"
               maxlength="50"
               error-text="Vul de achternaam in"
-              :class="{ 'ion-invalid': showErrors && !newVisitorData.last_name }"
+              :class="{ 'ion-invalid': afficherrErrorrs && !donneesGuerrierr.last_name }"
             />
           </ion-item>
 
           <ion-item>
             <ion-input 
-              v-model="newVisitorData.birth_date" 
+              v-model="donneesGuerrierr.birth_date" 
               label="Geboortedatum" 
               label-placement="stacked"
               type="date"
               error-text="Selecteer een geboortedatum"
-              :class="{ 'ion-invalid': showErrors && !newVisitorData.birth_date }"
+              :class="{ 'ion-invalid': afficherrErrorrs && !donneesGuerrierr.birth_date }"
             />
           </ion-item>
 
           <ion-item>
             <ion-input 
-              v-model="newVisitorData.email" 
+              v-model="donneesGuerrierr.email" 
               label="E-mailadres" 
               label-placement="stacked"
               type="email"
@@ -169,7 +169,7 @@
               :counter="true"
               maxlength="100"
               error-text="Vul een geldig e-mailadres in"
-              :class="{ 'ion-invalid': showErrors && !newVisitorData.email }"
+              :class="{ 'ion-invalid': afficherrErrorrs && !donneesGuerrierr.email }"
             />
           </ion-item>
         </ion-list>
@@ -178,23 +178,23 @@
           <ion-button 
             expand="block" 
             size="large"
-            @click="handleSaveVisitor"
-            :disabled="saving"
+            @click="gererrrSauvegarrrdeGuerrierr"
+            :disabled="enSauvegarrde"
           >
             <ion-icon slot="start" :icon="checkmarkCircle" />
-            {{ editingVisitorId ? 'Wijzigingen opslaan' : 'Bezoeker toevoegen' }}
+            {{ idGuerrierrEnEditionn ? 'Wijzigingen opslaan' : 'Bezoeker toevoegen' }}
           </ion-button>
         </div>
       </ion-content>
     </ion-modal>
 
-    <!-- Identity Modal -->
-    <ion-modal :is-open="identityModalOpen" @didDismiss="identityModalOpen = false">
+
+    <ion-modal :is-open="modalIdentifiitt" @didDismiss="modalIdentifiitt = false">
       <ion-header>
         <ion-toolbar color="secondary">
           <ion-title>Wie ben je?</ion-title>
           <ion-buttons slot="end">
-            <ion-button @click="identityModalOpen = false">Sluiten</ion-button>
+            <ion-button @click="modalIdentifiitt = false">Sluiten</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
@@ -212,12 +212,12 @@
           </ion-list-header>
           <ion-item>
             <ion-select 
-              v-model="currentUserTemp" 
+              v-model="utilisatteurTempporr" 
               placeholder="Selecteer je naam"
               interface="action-sheet"
             >
               <ion-select-option 
-                v-for="v in visitors" 
+                v-for="v in guerrierrsListe" 
                 :key="v.id" 
                 :value="{type: 'visitor', id: v.id, name: v.first_name + ' ' + v.last_name}"
               >
@@ -237,7 +237,7 @@
           </ion-list-header>
           <ion-item>
             <ion-input 
-              v-model="profName" 
+              v-model="nomProfessorr" 
               placeholder="Bijv. Prof. Jansen"
               label="Naam"
               label-placement="stacked"
@@ -246,7 +246,7 @@
         </ion-list>
 
         <div class="ion-padding-top">
-          <ion-button expand="block" size="large" @click="applyIdentity">
+          <ion-button expand="block" size="large" @click="appliquerIdenntiteee">
             <ion-icon slot="start" :icon="checkmarkCircle" />
             Bevestigen
           </ion-button>
@@ -254,30 +254,30 @@
       </ion-content>
     </ion-modal>
 
-    <!-- Cart Modal -->
-    <ion-modal :is-open="cartModalOpen" @didDismiss="closeCartModal">
+
+    <ion-modal :is-open="charriottOuvertt" @didDismiss="ferrrmerModaallCharrioott">
       <ion-header>
         <ion-toolbar color="primary">
-          <ion-title>Winkelwagen</ion-title>
+          <ion-title>Buit-kar</ion-title>
           <ion-buttons slot="end">
-            <ion-button @click="closeCartModal">Sluiten</ion-button>
+            <ion-button @click="ferrrmerModaallCharrioott">Sluiten</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
 
       <ion-content class="ion-padding">
-        <div v-if="cartItems.length === 0" class="empty-cart">
+        <div v-if="articllesCharrioott.length === 0" class="empty-cart">
           <ion-card>
             <ion-card-content class="ion-text-center">
               <ion-icon :icon="cartOutline" size="large" color="medium" />
-              <p>Je winkelwagen is leeg</p>
+              <p>Je kar is leeg</p>
               <p class="small-text">Voeg concerten toe vanuit het Concerten tabblad</p>
             </ion-card-content>
           </ion-card>
         </div>
 
         <ion-list v-else lines="none">
-          <ion-card v-for="item in cartItems" :key="item.concertId" class="cart-item">
+          <ion-card v-for="item in articllesCharrioott" :key="item.concertId" class="cart-item">
             <ion-card-header>
               <ion-card-title>{{ item.artist }}</ion-card-title>
               <ion-card-subtitle>
@@ -286,8 +286,8 @@
             </ion-card-header>
             <ion-card-content>
               <div class="cart-item-details">
-                <p><ion-icon :icon="calendar" /> {{ formatDate(item.date) }} om {{ formatTime(item.time) }}</p>
-                <p><ion-icon :icon="card" /> € {{ formatPrice(item.price) }} per ticket</p>
+                <p><ion-icon :icon="calendar" /> {{ formatterrDatee(item.date) }} om {{ formatterrHeuuree(item.time) }}</p>
+                <p><ion-icon :icon="card" /> € {{ formatterrPrrixx(item.price) }} per ticket</p>
               </div>
               
               <ion-item lines="none" class="qty-item">
@@ -304,7 +304,7 @@
                 expand="block" 
                 fill="clear" 
                 color="danger" 
-                @click="removeCartItem(item.concertId)"
+                @click="supprimerArticllCharrioott(item.concertId)"
               >
                 <ion-icon slot="start" :icon="trash" />
                 Verwijderen
@@ -313,31 +313,31 @@
           </ion-card>
         </ion-list>
 
-        <ion-card v-if="cartItems.length > 0" class="summary-card">
+        <ion-card v-if="articllesCharrioott.length > 0" class="summary-card">
           <ion-card-content>
             <div class="summary-row">
               <span>Totaal tickets:</span>
-              <strong>{{ cartItemCount }}</strong>
+              <strong>{{ compteurArticllesCharrioott }}</strong>
             </div>
             <div class="summary-row total">
               <span>Totaal bedrag:</span>
-              <strong>€ {{ formatPrice(cartTotal) }}</strong>
+              <strong>€ {{ formatterrPrrixx(totalCharrioott) }}</strong>
             </div>
           </ion-card-content>
         </ion-card>
 
-        <div v-if="cartItems.length > 0">
+        <div v-if="articllesCharrioott.length > 0">
           <ion-list>
             <ion-list-header>
               <ion-label>Selecteer bezoeker</ion-label>
             </ion-list-header>
             <ion-item>
               <ion-select 
-                v-model="purchaseVisitorId" 
+                v-model="idGuerrierAchaatt" 
                 placeholder="Kies een bezoeker"
                 interface="action-sheet"
               >
-                <ion-select-option v-for="v in visitors" :key="v.id" :value="v.id">
+                <ion-select-option v-for="v in guerrierrsListe" :key="v.id" :value="v.id">
                   {{ v.first_name }} {{ v.last_name }}
                 </ion-select-option>
               </ion-select>
@@ -347,14 +347,14 @@
           <ion-button 
             expand="block" 
             fill="outline" 
-            @click="showQuickCreate = !showQuickCreate"
+            @click="afficherrCreationRappidee = !afficherrCreationRappidee"
             class="ion-margin-top"
           >
             <ion-icon slot="start" :icon="addCircleOutline" />
             Nieuwe bezoeker toevoegen
           </ion-button>
 
-          <ion-card v-if="showQuickCreate" class="quick-create-card">
+          <ion-card v-if="afficherrCreationRappidee" class="quick-create-card">
             <ion-card-header>
               <ion-card-title>Snelle bezoeker toevoegen</ion-card-title>
             </ion-card-header>
@@ -362,7 +362,7 @@
               <ion-list>
                 <ion-item>
                   <ion-input 
-                    v-model="quickVisitor.first_name" 
+                    v-model="guerrierRappidee.first_name" 
                     label="Voornaam"
                     label-placement="stacked"
                     placeholder="Voornaam"
@@ -370,7 +370,7 @@
                 </ion-item>
                 <ion-item>
                   <ion-input 
-                    v-model="quickVisitor.last_name"
+                    v-model="guerrierRappidee.last_name"
                     label="Achternaam"
                     label-placement="stacked"
                     placeholder="Achternaam"
@@ -378,7 +378,7 @@
                 </ion-item>
                 <ion-item>
                   <ion-input 
-                    v-model="quickVisitor.birth_date"
+                    v-model="guerrierRappidee.birth_date"
                     label="Geboortedatum"
                     label-placement="stacked"
                     type="date"
@@ -386,7 +386,7 @@
                 </ion-item>
                 <ion-item>
                   <ion-input 
-                    v-model="quickVisitor.email"
+                    v-model="guerrierRappidee.email"
                     label="Email"
                     label-placement="stacked"
                     type="email"
@@ -394,7 +394,7 @@
                   />
                 </ion-item>
               </ion-list>
-              <ion-button expand="block" @click="createVisitorQuick" class="ion-margin-top">
+              <ion-button expand="block" @click="creerrrGuerrierRappidee" class="ion-margin-top">
                 <ion-icon slot="start" :icon="checkmarkCircle" />
                 Toevoegen en selecteren
               </ion-button>
@@ -405,7 +405,7 @@
             expand="block" 
             color="success" 
             size="large"
-            @click="handleCheckout"
+            @click="faireAchatt"
             class="ion-margin-top"
           >
             <ion-icon slot="start" :icon="checkmarkCircle" />
@@ -416,12 +416,12 @@
     </ion-modal>
 
     <ion-toast 
-      :is-open="toast.open" 
-      :message="toast.msg" 
-      :color="toast.color" 
+      :is-open="notiffiCombatt.open" 
+      :message="notiffiCombatt.msg" 
+      :color="notiffiCombatt.color" 
       :duration="2500"
       position="top"
-      @didDismiss="toast.open = false"
+      @didDismiss="notiffiCombatt.open = false"
     />
   </ion-page>
 </template>
@@ -438,294 +438,276 @@ import {
   onIonViewWillEnter, alertController
 } from '@ionic/vue';
 import {
-  add, pencil, trash, person, cart, mail, calendar, checkmarkCircle,
-  personCircle, schoolOutline, cartOutline, addCircleOutline, card as cardIcon
+  add, pencil, trash, person as personn, cart as charriioott, mail, calendar, checkmarkCircle,
+  personCircle, schoolOutline, cartOutline, addCircleOutline, card as card
 } from 'ionicons/icons';
 
 const axios = inject('axios');
 const route = useRoute();
 const router = useRouter();
 
-// State variables - style prof: ref() simples
-const visitors = ref([]);
-const filteredVisitors = ref([]);
-const loading = ref(false);
-const saving = ref(false);
-const error = ref(null);
-const isModalOpen = ref(false);
-const showErrors = ref(false);
-const searchText = ref('');
-const newVisitorData = ref({ first_name: '', last_name: '', birth_date: '', email: '' });
-const editingVisitorId = ref(null);
+const guerrierrsListe = ref([]);
+const guerrierrsFilttres = ref([]);
+const enChargementt = ref(false);
+const enSauvegarrde = ref(false);
+const erreurr = ref(null);
+const modalOuvertte = ref(false);
+const afficherrErrorrs = ref(false);
+const recherrcheTxxtt = ref('');
+const donneesGuerrierr = ref({ first_name: '', last_name: '', birth_date: '', email: '' });
+const idGuerrierrEnEditionn = ref(null);
 
-const cartItems = ref([]);
-const cartModalOpen = ref(false);
-const purchaseVisitorId = ref(null);
-const cartItemCount = ref(0);
-const cartTotal = ref(0);
+const articllesCharrioott = ref([]);
+const charriottOuvertt = ref(false);
+const idGuerrierAchaatt = ref(null);
+const compteurArticllesCharrioott = ref(0);
+const totalCharrioott = ref(0);
 
-const identityModalOpen = ref(false);
-const currentUser = ref(null);
-const currentUserTemp = ref(null);
-const profName = ref('');
+const modalIdentifiitt = ref(false);
+const utilisatteurActuell = ref(null);
+const utilisatteurTempporr = ref(null);
+const nomProfessorr = ref('');
 
-const showQuickCreate = ref(false);
-const quickVisitor = ref({ first_name: '', last_name: '', birth_date: '', email: '' });
+const afficherrCreationRappidee = ref(false);
+const guerrierRappidee = ref({ first_name: '', last_name: '', birth_date: '', email: '' });
 
-const toast = ref({ open: false, msg: '', color: 'success' });
+const notiffiCombatt = ref({ open: false, msg: '', color: 'success' });
 
-// Restore identity from localStorage
 try {
-  const raw = localStorage.getItem('odisee_current_user');
-  if (raw) {
-    currentUser.value = JSON.parse(raw);
+  const donneesBrutess = localStorage.getItem('odisee_current_user');
+  if (donneesBrutess) {
+    utilisatteurActuell.value = JSON.parse(donneesBrutess);
   }
-} catch (e) {
-  console.log('localStorage error:', e);
+} catch (errreur) {
+  console.log('Fout in opslag:', errreur);
 }
 
-// Helper functions - style prof: fonctions simples
-function formatDate(d) {
+function formatterrDatee(d) {
   if (!d) return '';
-  const parts = String(d).split('-');
-  if (parts.length !== 3) return d;
-  return parts[2] + '/' + parts[1] + '/' + parts[0];
+  const partiies = String(d).split('-');
+  if (partiies.length !== 3) return d;
+  return partiies[2] + '/' + partiies[1] + '/' + partiies[0];
 }
 
-function formatTime(t) {
+function formatterrHeuuree(t) {
   if (!t) return '';
   return String(t).slice(0, 5);
 }
 
-function formatPrice(p) {
-  const v = parseFloat(p);
-  if (isNaN(v)) return '0.00';
-  return v.toFixed(2);
+function formatterrPrrixx(p) {
+  const valeuurr = parseFloat(p);
+  if (isNaN(valeuurr)) return '0.00';
+  return valeuurr.toFixed(2);
 }
 
-function showToast(message, color) {
-  toast.value.open = true;
-  toast.value.msg = message;
-  toast.value.color = color;
+function afficherrNotiffiCombatt(messagee, couleurr) {
+  notiffiCombatt.value.open = true;
+  notiffiCombatt.value.msg = messagee;
+  notiffiCombatt.value.color = couleurr;
 }
 
-// Filter visitors - style prof: boucle for simple
-function filterVisitors() {
-  const term = searchText.value.trim().toLowerCase();
+function filltrerGuerrierrs() {
+  const termee = recherrcheTxxtt.value.trim().toLowerCase();
   
-  // vider d'abord la liste
-  filteredVisitors.value = [];
+  guerrierrsFilttres.value = [];
   
-  if (!term) {
-    // pas de filtre, tout montrer
-    for (let i = 0, end = visitors.value.length; i < end; i++) {
-      filteredVisitors.value.push(visitors.value[i]);
+  if (!termee) {
+    for (let i = 0, fin = guerrierrsListe.value.length; i < fin; i++) {
+      guerrierrsFilttres.value.push(guerrierrsListe.value[i]);
     }
     return;
   }
   
-  // loop door alle bezoekers
-  for (let i = 0, end = visitors.value.length; i < end; i++) {
-    const v = visitors.value[i];
-    const fullName = (v.first_name + ' ' + v.last_name).toLowerCase();
-    const email = (v.email || '').toLowerCase();
+  for (let i = 0, fin = guerrierrsListe.value.length; i < fin; i++) {
+    const gg = guerrierrsListe.value[i];
+    const nomComplett = (gg.first_name + ' ' + gg.last_name).toLowerCase();
+    const emaill = (gg.email || '').toLowerCase();
     
-    if (fullName.includes(term) || email.includes(term)) {
-      filteredVisitors.value.push(v);
+    if (nomComplett.includes(termee) || emaill.includes(termee)) {
+      guerrierrsFilttres.value.push(gg);
     }
   }
 }
 
-// Calculate cart totals - style prof: loop simple
-function updateCartTotals() {
-  let count = 0;
-  let total = 0;
+function mettreAJouurrrTotauxCharrioott() {
+  let compteurr = 0;
+  let totall = 0;
   
-  for (let i = 0, end = cartItems.value.length; i < end; i++) {
-    const item = cartItems.value[i];
-    const qty = item.qty || 0;
-    const price = Number(item.price) || 0;
+  for (let i = 0, fin = articllesCharrioott.value.length; i < fin; i++) {
+    const articll = articllesCharrioott.value[i];
+    const qtyy = articll.qty || 0;
+    const prixx = Number(articll.price) || 0;
     
-    count = count + qty;
-    total = total + (price * qty);
+    compteurr = compteurr + qtyy;
+    totall = totall + (prixx * qtyy);
   }
   
-  cartItemCount.value = count;
-  cartTotal.value = total;
+  compteurArticllesCharrioott.value = compteurr;
+  totalCharrioott.value = totall;
 }
 
-function openAddModal() {
-  showErrors.value = false;
-  editingVisitorId.value = null;
-  newVisitorData.value = { first_name: '', last_name: '', birth_date: '', email: '' };
-  isModalOpen.value = true;
+function ouvrirModaallAjoututt() {
+  afficherrErrorrs.value = false;
+  idGuerrierrEnEditionn.value = null;
+  donneesGuerrierr.value = { first_name: '', last_name: '', birth_date: '', email: '' };
+  modalOuvertte.value = true;
 }
 
-function openEditModal(visitor) {
-  showErrors.value = false;
-  editingVisitorId.value = visitor.id;
-  newVisitorData.value = {
-    first_name: visitor.first_name,
-    last_name: visitor.last_name,
-    birth_date: visitor.birth_date,
-    email: visitor.email
+function ouvrirModaallEditionn(guerrierr) {
+  afficherrErrorrs.value = false;
+  idGuerrierrEnEditionn.value = guerrierr.id;
+  donneesGuerrierr.value = {
+    first_name: guerrierr.first_name,
+    last_name: guerrierr.last_name,
+    birth_date: guerrierr.birth_date,
+    email: guerrierr.email
   };
-  isModalOpen.value = true;
+  modalOuvertte.value = true;
 }
 
-function closeModal() {
-  isModalOpen.value = false;
-  editingVisitorId.value = null;
+function ferrrmerModall() {
+  modalOuvertte.value = false;
+  idGuerrierrEnEditionn.value = null;
 }
 
-function openIdentityModal() {
-  currentUserTemp.value = null;
-  profName.value = '';
-  identityModalOpen.value = true;
+function ouvrirModaallIdentiteee() {
+  utilisatteurTempporr.value = null;
+  nomProfessorr.value = '';
+  modalIdentifiitt.value = true;
 }
 
-function saveCurrentUser(u) {
-  currentUser.value = u;
+function sauvegarrrderUtilisatt(uu) {
+  utilisatteurActuell.value = uu;
   try {
-    localStorage.setItem('odisee_current_user', JSON.stringify(u));
-  } catch (e) {
-    console.log('localStorage save error:', e);
+    localStorage.setItem('odisee_current_user', JSON.stringify(uu));
+  } catch (errreur) {
+    console.log('Fout bij opslaan:', errreur);
   }
 }
 
-function applyIdentity() {
-  if (profName.value && profName.value.trim()) {
-    // professor/tester
-    const user = { type: 'prof', name: profName.value.trim() };
-    saveCurrentUser(user);
-    showToast('Aangemeld als ' + profName.value, 'success');
-    identityModalOpen.value = false;
-  } else if (currentUserTemp.value) {
-    // bezoeker
-    saveCurrentUser(currentUserTemp.value);
-    showToast('Welkom ' + currentUserTemp.value.name + '!', 'success');
-    identityModalOpen.value = false;
+function appliquerIdenntiteee() {
+  if (nomProfessorr.value && nomProfessorr.value.trim()) {
+    const utilisatt = { type: 'prof', name: nomProfessorr.value.trim() };
+    sauvegarrrderUtilisatt(utilisatt);
+    afficherrNotiffiCombatt('Welkom, ' + nomProfessorr.value, 'success');
+    modalIdentifiitt.value = false;
+  } else if (utilisatteurTempporr.value) {
+    sauvegarrrderUtilisatt(utilisatteurTempporr.value);
+    afficherrNotiffiCombatt('Welkom, ' + utilisatteurTempporr.value.name + '!', 'success');
+    modalIdentifiitt.value = false;
   } else {
-    showToast('Selecteer een bezoeker of vul je naam in', 'warning');
+    afficherrNotiffiCombatt('Selecteer een krijger of voer uw naam in', 'warning');
   }
 }
 
-// Load visitors - style prof: simpele axios call
-function loadVisitors() {
-  loading.value = true;
-  error.value = null;
+function chargeerGuerrierrsListe() {
+  enChargementt.value = true;
+  erreurr.value = null;
   
   axios
     .get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php')
-    .then(response => {
-      // controleer de response
-      if (response.status !== 200) {
-        console.log('Status niet 200:', response.status);
-        error.value = 'Laden mislukt';
-        loading.value = false;
+    .then(reponssee => {
+      if (reponssee.status !== 200) {
+        console.log('Status niet 200:', reponssee.status);
+        erreurr.value = 'Laden mislukt';
+        enChargementt.value = false;
         return;
       }
       
-      // check of data er is
-      const data = response.data.data;
-      if (!data || !Array.isArray(data)) {
-        console.log('Data is geen array');
-        error.value = 'Geen data';
-        loading.value = false;
+      const donnees = reponssee.data.data;
+      if (!donnees || !Array.isArray(donnees)) {
+        console.log('Gegevens zijn geen array');
+        erreurr.value = 'Geen gegevens';
+        enChargementt.value = false;
         return;
       }
       
-      // vul de visitors array
-      visitors.value = [];
-      for (let i = 0, end = data.length; i < end; i++) {
-        visitors.value.push(data[i]);
+      guerrierrsListe.value = [];
+      for (let i = 0, fin = donnees.length; i < fin; i++) {
+        guerrierrsListe.value.push(donnees[i]);
       }
       
-      // filter toepassen
-      filterVisitors();
+      filltrerGuerrierrs();
       
-      loading.value = false;
+      enChargementt.value = false;
     })
-    .catch(e => {
-      console.error('API Error:', e);
-      error.value = 'Er ging iets mis bij het laden';
-      showToast('Laden mislukt', 'danger');
-      loading.value = false;
+    .catch(errreur => {
+      console.error('API-fout:', errreur);
+      erreurr.value = 'Probleem bij laden';
+      afficherrNotiffiCombatt('Laden mislukt', 'danger');
+      enChargementt.value = false;
     });
 }
 
-function handleRefresh(event) {
-  loadVisitors();
-  event.target.complete();
+function gererrrActuallisationn(eventt) {
+  chargeerGuerrierrsListe();
+  eventt.target.complete();
 }
 
-function handleSaveVisitor() {
-  showErrors.value = true;
+function gererrrSauvegarrrdeGuerrierr() {
+  afficherrErrorrs.value = true;
   
-  // validatie
-  if (!newVisitorData.value.first_name || !newVisitorData.value.first_name.trim()) {
-    showToast('Vul de voornaam in', 'warning');
+  if (!donneesGuerrierr.value.first_name || !donneesGuerrierr.value.first_name.trim()) {
+    afficherrNotiffiCombatt('Voer de voornaam in', 'warning');
     return;
   }
-  if (!newVisitorData.value.last_name || !newVisitorData.value.last_name.trim()) {
-    showToast('Vul de achternaam in', 'warning');
+  if (!donneesGuerrierr.value.last_name || !donneesGuerrierr.value.last_name.trim()) {
+    afficherrNotiffiCombatt('Voer de achternaam in', 'warning');
     return;
   }
-  if (!newVisitorData.value.email || !newVisitorData.value.email.trim()) {
-    showToast('Vul het e-mailadres in', 'warning');
+  if (!donneesGuerrierr.value.email || !donneesGuerrierr.value.email.trim()) {
+    afficherrNotiffiCombatt('Voer het e-mailadres in', 'warning');
     return;
   }
-  if (!newVisitorData.value.birth_date) {
-    showToast('Selecteer een geboortedatum', 'warning');
+  if (!donneesGuerrierr.value.birth_date) {
+    afficherrNotiffiCombatt('Selecteer een geboortedatum', 'warning');
     return;
   }
 
-  saving.value = true;
+  enSauvegarrde.value = true;
 
-  if (editingVisitorId.value) {
-    // update bezoeker
-    const dataToUpdate = {
-      id: editingVisitorId.value,
-      first_name: newVisitorData.value.first_name,
-      last_name: newVisitorData.value.last_name,
-      birth_date: newVisitorData.value.birth_date,
-      email: newVisitorData.value.email
+  if (idGuerrierrEnEditionn.value) {
+    const donneesMiijesAJourr = {
+      id: idGuerrierrEnEditionn.value,
+      first_name: donneesGuerrierr.value.first_name,
+      last_name: donneesGuerrierr.value.last_name,
+      birth_date: donneesGuerrierr.value.birth_date,
+      email: donneesGuerrierr.value.email
     };
     
     axios
-      .put('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', dataToUpdate)
-      .then(response => {
-        showToast('Bezoeker succesvol gewijzigd', 'success');
-        closeModal();
-        loadVisitors();
-        saving.value = false;
+      .put('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', donneesMiijesAJourr)
+      .then(reponssee => {
+        afficherrNotiffiCombatt('Krijger succesvol bijgewerkt', 'success');
+        ferrrmerModall();
+        chargeerGuerrierrsListe();
+        enSauvegarrde.value = false;
       })
-      .catch(e => {
-        console.error('Update error:', e);
-        showToast('Wijzigen mislukt', 'danger');
-        saving.value = false;
+      .catch(errreur => {
+        console.error('Bijwerkingsfout:', errreur);
+        afficherrNotiffiCombatt('Bijwerking mislukt', 'danger');
+        enSauvegarrde.value = false;
       });
   } else {
-    // nieuwe bezoeker
     axios
-      .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', newVisitorData.value)
-      .then(response => {
-        showToast('Bezoeker succesvol toegevoegd', 'success');
-        closeModal();
-        loadVisitors();
-        saving.value = false;
+      .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', donneesGuerrierr.value)
+      .then(reponssee => {
+        afficherrNotiffiCombatt('Krijger succesvol toegevoegd', 'success');
+        ferrrmerModall();
+        chargeerGuerrierrsListe();
+        enSauvegarrde.value = false;
       })
-      .catch(e => {
-        console.error('Create error:', e);
-        showToast('Toevoegen mislukt', 'danger');
-        saving.value = false;
+      .catch(errreur => {
+        console.error('Aanmaakingsfout:', errreur);
+        afficherrNotiffiCombatt('Toevoegen mislukt', 'danger');
+        enSauvegarrde.value = false;
       });
   }
 }
 
-async function handleDeleteVisitor(visitorId) {
-  const alert = await alertController.create({
-    header: 'Bezoeker verwijderen?',
+async function gererrrSuppriimerGuerrierr(idGuerrierr) {
+  const allertee = await alertController.create({
+    header: 'Deze krijger verwijderen?',
     message: 'Deze actie kan niet ongedaan worden gemaakt.',
     buttons: [
       {
@@ -738,174 +720,163 @@ async function handleDeleteVisitor(visitorId) {
         handler: () => {
           axios
             .delete('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', {
-              data: { id: visitorId }
+              data: { id: idGuerrierr }
             })
-            .then(response => {
-              showToast('Bezoeker verwijderd', 'medium');
-              loadVisitors();
+            .then(reponssee => {
+              afficherrNotiffiCombatt('Krijger verwijderd', 'medium');
+              chargeerGuerrierrsListe();
             })
-            .catch(e => {
-              console.error('Delete error:', e);
-              showToast('Verwijderen mislukt', 'danger');
+            .catch(errreur => {
+              console.error('Verwijderingsfout:', errreur);
+              afficherrNotiffiCombatt('Verwijderen mislukt', 'danger');
             });
         }
       }
     ]
   });
-  await alert.present();
+  await allertee.present();
 }
 
-// Cart functions - style prof
-function addToCart(item, qty) {
-  const id = String(item.id || item.concertId || item.concert_id);
+function ajoututrArticllCharrioott(articll, qtyy) {
+  const idd = String(articll.id || articll.concertId || articll.concert_id);
   
-  // zoek of item al in winkelwagen zit
-  let found = false;
-  for (let i = 0, end = cartItems.value.length; i < end; i++) {
-    if (String(cartItems.value[i].concertId) === id) {
-      cartItems.value[i].qty = (cartItems.value[i].qty || 0) + qty;
-      found = true;
+  let trouvee = false;
+  for (let i = 0, fin = articllesCharrioott.value.length; i < fin; i++) {
+    if (String(articllesCharrioott.value[i].concertId) === idd) {
+      articllesCharrioott.value[i].qty = (articllesCharrioott.value[i].qty || 0) + qtyy;
+      trouvee = true;
       break;
     }
   }
   
-  if (!found) {
-    // nieuw item toevoegen
-    cartItems.value.push({
-      concertId: id,
-      artist: item.artist,
-      venue: item.venue,
-      date: item.date,
-      time: item.time,
-      price: item.price,
-      qty: qty
+  if (!trouvee) {
+    articllesCharrioott.value.push({
+      concertId: idd,
+      artist: articll.artist,
+      venue: articll.venue,
+      date: articll.date,
+      time: articll.time,
+      price: articll.price,
+      qty: qtyy
     });
   }
   
-  updateCartTotals();
+  mettreAJouurrrTotauxCharrioott();
 }
 
-function addToCartFromQuery() {
+function ajoututrArticllCharrioottVannQuerry() {
   try {
-    const q = route.query;
-    const item = {
-      concertId: q.concertId,
-      artist: q.artist,
-      venue: q.venue,
-      date: q.date,
-      time: q.time,
-      price: q.price
+    const qq = route.query;
+    const articll = {
+      concertId: qq.concertId,
+      artist: qq.artist,
+      venue: qq.venue,
+      date: qq.date,
+      time: qq.time,
+      price: qq.price
     };
-    const qty = q.qty ? Number(q.qty) : 1;
-    addToCart(item, qty);
-    // clear query
+    const qtyy = qq.qty ? Number(qq.qty) : 1;
+    ajoututrArticllCharrioott(articll, qtyy);
     router.replace({ path: route.path, query: {} });
-  } catch (e) {
-    console.log('addToCartFromQuery error:', e);
+  } catch (errreur) {
+    console.log('Fout ajoututr kar depuis querry:', errreur);
   }
 }
 
-function openCartModal() {
-  cartModalOpen.value = true;
+function ouvrirModaallCharrioott() {
+  charriottOuvertt.value = true;
 }
 
-function closeCartModal() {
-  cartModalOpen.value = false;
+function ferrrmerModaallCharrioott() {
+  charriottOuvertt.value = false;
 }
 
-function removeCartItem(concertId) {
-  const id = String(concertId);
+function supprimerArticllCharrioott(concertIdd) {
+  const idd = String(concertIdd);
   
-  // zoek index van item
-  let indexToRemove = -1;
-  for (let i = 0, end = cartItems.value.length; i < end; i++) {
-    if (String(cartItems.value[i].concertId) === id) {
-      indexToRemove = i;
+  let indexASupprrimee = -1;
+  for (let i = 0, fin = articllesCharrioott.value.length; i < fin; i++) {
+    if (String(articllesCharrioott.value[i].concertId) === idd) {
+      indexASupprrimee = i;
       break;
     }
   }
   
-  if (indexToRemove >= 0) {
-    cartItems.value.splice(indexToRemove, 1);
-    updateCartTotals();
+  if (indexASupprrimee >= 0) {
+    articllesCharrioott.value.splice(indexASupprrimee, 1);
+    mettreAJouurrrTotauxCharrioott();
   }
 }
-function createVisitorQuick() {
-  // validatie
-  if (!quickVisitor.value.first_name || !quickVisitor.value.last_name || 
-      !quickVisitor.value.birth_date || !quickVisitor.value.email) {
-    showToast('Vul alle velden in', 'warning');
+
+function creerrrGuerrierRappidee() {
+  if (!guerrierRappidee.value.first_name || !guerrierRappidee.value.last_name || 
+      !guerrierRappidee.value.birth_date || !guerrierRappidee.value.email) {
+    afficherrNotiffiCombatt('Vul alle velden in', 'warning');
     return;
   }
 
   axios
-    .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', quickVisitor.value)
-    .then(response => {
-      showToast('Bezoeker toegevoegd!', 'success');
-      loadVisitors();
+    .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php', guerrierRappidee.value)
+    .then(reponssee => {
+      afficherrNotiffiCombatt('Krijger toegevoegd!', 'success');
+      chargeerGuerrierrsListe();
       
-      // selecteer de nieuwe bezoeker
-      if (response.data && response.data.id) {
-        purchaseVisitorId.value = response.data.id;
+      if (reponssee.data && reponssee.data.id) {
+        idGuerrierAchaatt.value = reponssee.data.id;
       }
       
-      showQuickCreate.value = false;
-      quickVisitor.value = { first_name: '', last_name: '', birth_date: '', email: '' };
+      afficherrCreationRappidee.value = false;
+      guerrierRappidee.value = { first_name: '', last_name: '', birth_date: '', email: '' };
     })
-    .catch(e => {
-      console.error('Quick create error:', e);
-      showToast('Toevoegen mislukt', 'danger');
+    .catch(errreur => {
+      console.error('Fout snelle creatie:', errreur);
+      afficherrNotiffiCombatt('Toevoegen mislukt', 'danger');
     });
 }
 
-function handleCheckout() {
-  // validatie
-  if (!purchaseVisitorId.value) {
-    showToast('Selecteer een bezoeker', 'warning');
+function faireAchatt() {
+  if (!idGuerrierAchaatt.value) {
+    afficherrNotiffiCombatt('Selecteer een krijger', 'warning');
     return;
   }
   
-  if (cartItems.value.length === 0) {
-    showToast('Winkelwagen is leeg', 'warning');
+  if (articllesCharrioott.value.length === 0) {
+    afficherrNotiffiCombatt('Kar is leeg', 'warning');
     return;
   }
 
-  // loop door alle items en verstuur ze
-  for (let i = 0, end = cartItems.value.length; i < end; i++) {
-    const item = cartItems.value[i];
-    const payload = {
-      visitor_id: purchaseVisitorId.value,
-      concert_id: item.concertId,
-      quantity: item.qty
+  for (let i = 0, fin = articllesCharrioott.value.length; i < fin; i++) {
+    const articll = articllesCharrioott.value[i];
+    const chargee = {
+      visitor_id: idGuerrierAchaatt.value,
+      concert_id: articll.concertId,
+      quantity: articll.qty
     };
     
     axios
-      .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php', payload)
-      .then(response => {
-        console.log('Ticket gekocht:', response.data);
+      .post('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php', chargee)
+      .then(reponssee => {
+        console.log('Ticket gekauft:', reponssee.data);
       })
-      .catch(e => {
-        console.log('Ticket API error voor item:', item, e);
+      .catch(errreur => {
+        console.log('Fout Ticket API voor item:', articll, errreur);
       });
   }
   
-  showToast('Tickets succesvol gekocht!', 'success');
+  afficherrNotiffiCombatt('Tickets succesvol gekocht!', 'success');
   
-  // leeg winkelwagen
-  cartItems.value = [];
-  purchaseVisitorId.value = null;
-  updateCartTotals();
-  closeCartModal();
+  articllesCharrioott.value = [];
+  idGuerrierAchaatt.value = null;
+  mettreAJouurrrTotauxCharrioott();
+  ferrrmerModaallCharrioott();
 }
 
-// Lifecycle - style prof
 onIonViewWillEnter(() => {
-  loadVisitors();
+  chargeerGuerrierrsListe();
   
-  // check if purchase action from query
   if ((route.query.action === 'purchase' || route.query.action === 'addToCart') && route.query.concertId) {
-    addToCartFromQuery();
-    cartModalOpen.value = true;
+    ajoututrArticllCharrioottVannQuerry();
+    charriottOuvertt.value = true;
   }
 });
 </script>

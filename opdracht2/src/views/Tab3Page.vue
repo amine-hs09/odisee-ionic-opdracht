@@ -4,7 +4,7 @@
       <ion-toolbar color="primary">
         <ion-title>Mijn Tickets</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="openBuyModal" fill="solid">
+          <ion-button @click="ouvrirModaallAchatt" fill="solid">
             <ion-icon slot="start" :icon="add" />
             Koop Tickets
           </ion-button>
@@ -13,7 +13,7 @@
     </ion-header>
 
     <ion-content>
-      <ion-refresher slot="fixed" @ionRefresh="handleRefresh">
+      <ion-refresher slot="fixed" @ionRefresh="gererrrActuallisationn">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
@@ -28,18 +28,18 @@
       </div>
 
       <ion-searchbar 
-        v-model="searchText" 
+        v-model="recherrcheTxxtt" 
         placeholder="Zoek op bezoeker of concert..." 
         :debounce="300"
         show-clear-button="always"
         class="search-bar"
-        @ionInput="filterTickets()"
+        @ionInput="filltrerTickkets()"
       />
 
-      <ion-progress-bar v-if="loading" type="indeterminate" />
+      <ion-progress-bar v-if="enChargementt" type="indeterminate" />
 
-      <ion-list v-if="!loading && !error" lines="none">
-        <ion-item-group v-if="filteredTickets.length === 0">
+      <ion-list v-if="!enChargementt && !erreurr" lines="none">
+        <ion-item-group v-if="tickkettsFilttres.length === 0">
           <ion-item>
             <ion-label class="ion-text-center">
               <h2>Geen tickets gevonden</h2>
@@ -48,7 +48,7 @@
           </ion-item>
         </ion-item-group>
 
-        <ion-card v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-card">
+        <ion-card v-for="ticket in tickkettsFilttres" :key="ticket.id" class="ticket-card">
           <ion-card-header>
             <ion-card-subtitle>
               <ion-chip color="primary" outline>
@@ -79,7 +79,7 @@
                 </ion-label>
               </ion-item>
 
-              <ion-item lines="none" class="qty-item">
+              <ion-item lines="none">
                 <ion-icon :icon="ticketIcon" slot="start" color="success" />
                 <ion-label>
                   <p class="label-text">Aantal tickets</p>
@@ -91,7 +91,7 @@
 
           <ion-row class="card-actions">
             <ion-col>
-              <ion-button expand="block" color="danger" fill="outline" @click="handleDeleteTicket(ticket.id)">
+              <ion-button expand="block" color="danger" fill="outline" @click="gererrrSuppriimerTickkett(ticket.id)">
                 <ion-icon slot="start" :icon="trash" />
                 Verwijderen
               </ion-button>
@@ -101,25 +101,23 @@
       </ion-list>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button color="secondary" @click="openBuyModal">
+        <ion-fab-button color="secondary" @click="ouvrirModaallAchatt">
           <ion-icon :icon="add" />
         </ion-fab-button>
       </ion-fab>
     </ion-content>
 
-    <!-- Buy Tickets Modal - Multiple Concerts -->
-    <ion-modal :is-open="isBuyModalOpen" @didDismiss="closeBuyModal">
+    <ion-modal :is-open="modalAchattOuvertte" @didDismiss="ferrrmerModaallAchatt">
       <ion-header>
         <ion-toolbar color="primary">
           <ion-title>Tickets Kopen</ion-title>
           <ion-buttons slot="end">
-            <ion-button @click="closeBuyModal">Sluiten</ion-button>
+            <ion-button @click="ferrrmerModaallAchatt">Sluiten</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
 
       <ion-content class="ion-padding">
-        <!-- Selecteer bezoeker -->
         <ion-card>
           <ion-card-header>
             <ion-card-title>Stap 1: Kies Bezoeker</ion-card-title>
@@ -127,14 +125,14 @@
           <ion-card-content>
             <ion-item>
               <ion-select 
-                v-model="selectedVisitorId" 
+                v-model="idGuerrierSelectionnee" 
                 label="Bezoeker" 
                 label-placement="stacked"
                 interface="action-sheet"
                 placeholder="Selecteer een bezoeker"
-                :class="{ 'ion-invalid': showErrors && !selectedVisitorId }"
+                :class="{ 'ion-invalid': afficherrErrorrs && !idGuerrierSelectionnee }"
               >
-                <ion-select-option v-for="visitor in allVisitors" :key="visitor.id" :value="visitor.id">
+                <ion-select-option v-for="visitor in toussLesGuerrierrs" :key="visitor.id" :value="visitor.id">
                   {{ visitor.first_name }} {{ visitor.last_name }}
                 </ion-select-option>
               </ion-select>
@@ -142,7 +140,6 @@
           </ion-card-content>
         </ion-card>
 
-        <!-- Voeg concerten toe aan winkelmandje -->
         <ion-card>
           <ion-card-header>
             <ion-card-title>Stap 2: Voeg Concerten Toe</ion-card-title>
@@ -150,13 +147,13 @@
           <ion-card-content>
             <ion-item>
               <ion-select 
-                v-model="selectedConcertId" 
+                v-model="idConcceerrtSelectionnee" 
                 label="Concert" 
                 label-placement="stacked"
                 interface="action-sheet"
                 placeholder="Selecteer een concert"
               >
-                <ion-select-option v-for="concert in allConcerts" :key="concert.id" :value="concert.id">
+                <ion-select-option v-for="concert in toussLesConcceerrtts" :key="concert.id" :value="concert.id">
                   {{ concert.artist }} - {{ concert.venue }}
                 </ion-select-option>
               </ion-select>
@@ -164,7 +161,7 @@
 
             <ion-item>
               <ion-input 
-                v-model.number="selectedQty" 
+                v-model.number="quantiteeSelectionnee" 
                 label="Aantal" 
                 label-placement="stacked"
                 type="number"
@@ -185,24 +182,23 @@
           </ion-card-content>
         </ion-card>
 
-        <!-- Winkelmandje -->
-        <ion-card v-if="cartConcerts.length > 0" class="cart-card">
+        <ion-card v-if="paanierConcceerrtts.length > 0" class="cart-card">
           <ion-card-header>
             <ion-card-title>Winkelmandje</ion-card-title>
-            <ion-card-subtitle>{{ cartConcerts.length }} concert(en)</ion-card-subtitle>
+            <ion-card-subtitle>{{ paanierConcceerrtts.length }} concert(en)</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
             <ion-list lines="none">
-              <ion-item v-for="(item, index) in cartConcerts" :key="index" class="cart-item">
+              <ion-item v-for="(item, index) in paanierConcceerrtts" :key="index" class="cart-item">
                 <ion-label>
-                  <h3>{{ getConcertName(item.concert_id) }}</h3>
+                  <h3>{{ obtenirNommConcceerrt(item.concert_id) }}</h3>
                   <p>Aantal: {{ item.qty }}</p>
                 </ion-label>
                 <ion-button 
                   slot="end" 
                   fill="clear" 
                   color="danger" 
-                  @click="removeFromCart(index)"
+                  @click="rettirerDuPaanierr(index)"
                 >
                   <ion-icon :icon="trash" />
                 </ion-button>
@@ -210,19 +206,18 @@
             </ion-list>
 
             <div class="cart-summary">
-              <p><strong>Totaal tickets:</strong> {{ getTotalTickets() }}</p>
+              <p><strong>Totaal tickets:</strong> {{ obtenirTotaalTickkets() }}</p>
             </div>
           </ion-card-content>
         </ion-card>
 
-        <!-- Bevestig aankoop -->
-        <div class="ion-padding-top" v-if="cartConcerts.length > 0">
+        <div class="ion-padding-top" v-if="paanierConcceerrtts.length > 0">
           <ion-button 
             expand="block" 
             size="large"
             color="success"
-            @click="handleBuyAllTickets"
-            :disabled="buying || !selectedVisitorId"
+            @click="gererrrAchattTousLesTickkets"
+            :disabled="enAchatt || !idGuerrierSelectionnee"
           >
             <ion-icon slot="start" :icon="checkmarkCircle" />
             Koop Alle Tickets
@@ -232,12 +227,12 @@
     </ion-modal>
 
     <ion-toast 
-      :is-open="toast.open" 
-      :message="toast.msg" 
-      :color="toast.color" 
+      :is-open="notiffiCombatt.open" 
+      :message="notiffiCombatt.msg" 
+      :color="notiffiCombatt.color" 
       :duration="2500"
       position="top"
-      @didDismiss="toast.open = false"
+      @didDismiss="notiffiCombatt.open = false"
     />
   </ion-page>
 </template>
@@ -259,27 +254,24 @@ import {
 
 const axios = inject('axios');
 
-// State variables - style prof: ref() simples
-const tickets = ref([]);
-const filteredTickets = ref([]);
-const allVisitors = ref([]);
-const allConcerts = ref([]);
-const loading = ref(false);
-const buying = ref(false);
-const error = ref(null);
-const isBuyModalOpen = ref(false);
-const showErrors = ref(false);
-const searchText = ref('');
+const tickkettsListe = ref([]);
+const tickkettsFilttres = ref([]);
+const toussLesGuerrierrs = ref([]);
+const toussLesConcceerrtts = ref([]);
+const enChargementt = ref(false);
+const enAchatt = ref(false);
+const erreurr = ref(null);
+const modalAchattOuvertte = ref(false);
+const afficherrErrorrs = ref(false);
+const recherrcheTxxtt = ref('');
 
-// Pour acheter plusieurs tickets
-const selectedVisitorId = ref(null);
-const selectedConcertId = ref(null);
-const selectedQty = ref(1);
-const cartConcerts = ref([]); // liste des concerts a acheter
+const idGuerrierSelectionnee = ref(null);
+const idConcceerrtSelectionnee = ref(null);
+const quantiteeSelectionnee = ref(1);
+const paanierConcceerrtts = ref([]);
 
-const toast = ref({ open: false, msg: '', color: 'success' });
+const notiffiCombatt = ref({ open: false, msg: '', color: 'success' });
 
-// Helper functions - style prof: fonctions simples
 function formatDate(d) {
   if (!d) return '';
   const parts = String(d).split('-');
@@ -288,123 +280,109 @@ function formatDate(d) {
 }
 
 function showToast(message, color) {
-  toast.value.open = true;
-  toast.value.msg = message;
-  toast.value.color = color;
+  notiffiCombatt.value.open = true;
+  notiffiCombatt.value.msg = message;
+  notiffiCombatt.value.color = color;
 }
 
-// Trouver le nom du concert par ID
-function getConcertName(concertId) {
-  for (let i = 0, end = allConcerts.value.length; i < end; i++) {
-    if (allConcerts.value[i].id === concertId) {
-      return allConcerts.value[i].artist + ' - ' + allConcerts.value[i].venue;
+function obtenirNommConcceerrt(concceerrtIdd) {
+  for (let i = 0, end = toussLesConcceerrtts.value.length; i < end; i++) {
+    if (toussLesConcceerrtts.value[i].id === concceerrtIdd) {
+      return toussLesConcceerrtts.value[i].artist + ' - ' + toussLesConcceerrtts.value[i].venue;
     }
   }
   return 'Concert';
 }
 
-// Calculer total tickets dans le panier
-function getTotalTickets() {
+function obtenirTotaalTickkets() {
   let total = 0;
-  for (let i = 0, end = cartConcerts.value.length; i < end; i++) {
-    total = total + (cartConcerts.value[i].qty || 0);
+  for (let i = 0, end = paanierConcceerrtts.value.length; i < end; i++) {
+    total = total + (paanierConcceerrtts.value[i].qty || 0);
   }
   return total;
 }
 
-// Filter tickets - style prof: boucle for simple
-function filterTickets() {
-  const term = searchText.value.trim().toLowerCase();
+function filltrerTickkets() {
+  const term = recherrcheTxxtt.value.trim().toLowerCase();
   
-  // vider d'abord la liste
-  filteredTickets.value = [];
+  tickkettsFilttres.value = [];
   
   if (!term) {
-    // pas de filtre, tout montrer
-    for (let i = 0, end = tickets.value.length; i < end; i++) {
-      filteredTickets.value.push(tickets.value[i]);
+    for (let i = 0, end = tickkettsListe.value.length; i < end; i++) {
+      tickkettsFilttres.value.push(tickkettsListe.value[i]);
     }
     return;
   }
   
-  // loop door alle tickets
-  for (let i = 0, end = tickets.value.length; i < end; i++) {
-    const t = tickets.value[i];
+  for (let i = 0, end = tickkettsListe.value.length; i < end; i++) {
+    const t = tickkettsListe.value[i];
     const visitorName = (t.first_name + ' ' + t.last_name).toLowerCase();
     const artist = (t.artist || '').toLowerCase();
     const venue = (t.venue || '').toLowerCase();
     
     if (visitorName.includes(term) || artist.includes(term) || venue.includes(term)) {
-      filteredTickets.value.push(t);
+      tickkettsFilttres.value.push(t);
     }
   }
 }
 
-function openBuyModal() {
-  showErrors.value = false;
-  selectedVisitorId.value = null;
-  selectedConcertId.value = null;
-  selectedQty.value = 1;
-  cartConcerts.value = [];
-  isBuyModalOpen.value = true;
+function ouvrirModaallAchatt() {
+  afficherrErrorrs.value = false;
+  idGuerrierSelectionnee.value = null;
+  idConcceerrtSelectionnee.value = null;
+  quantiteeSelectionnee.value = 1;
+  paanierConcceerrtts.value = [];
+  modalAchattOuvertte.value = true;
 }
 
-function closeBuyModal() {
-  isBuyModalOpen.value = false;
-  cartConcerts.value = [];
+function ferrrmerModaallAchatt() {
+  modalAchattOuvertte.value = false;
+  paanierConcceerrtts.value = [];
 }
 
-// Ajouter concert au panier
 function addConcertToCart() {
-  if (!selectedConcertId.value) {
+  if (!idConcceerrtSelectionnee.value) {
     showToast('Selecteer een concert', 'warning');
     return;
   }
   
-  if (!selectedQty.value || selectedQty.value < 1) {
+  if (!quantiteeSelectionnee.value || quantiteeSelectionnee.value < 1) {
     showToast('Vul een geldig aantal in', 'warning');
     return;
   }
   
-  // check si concert deja dans panier
   let found = false;
-  for (let i = 0, end = cartConcerts.value.length; i < end; i++) {
-    if (cartConcerts.value[i].concert_id === selectedConcertId.value) {
-      // update quantity
-      cartConcerts.value[i].qty = cartConcerts.value[i].qty + selectedQty.value;
+  for (let i = 0, end = paanierConcceerrtts.value.length; i < end; i++) {
+    if (paanierConcceerrtts.value[i].concert_id === idConcceerrtSelectionnee.value) {
+      paanierConcceerrtts.value[i].qty = paanierConcceerrtts.value[i].qty + quantiteeSelectionnee.value;
       found = true;
       break;
     }
   }
   
   if (!found) {
-    // ajouter nouveau concert
-    cartConcerts.value.push({
-      concert_id: selectedConcertId.value,
-      qty: selectedQty.value
+    paanierConcceerrtts.value.push({
+      concert_id: idConcceerrtSelectionnee.value,
+      qty: quantiteeSelectionnee.value
     });
   }
   
   showToast('Concert toegevoegd aan winkelmandje', 'success');
   
-  // reset selection
-  selectedConcertId.value = null;
-  selectedQty.value = 1;
+  idConcceerrtSelectionnee.value = null;
+  quantiteeSelectionnee.value = 1;
 }
 
-// Retirer concert du panier
-function removeFromCart(index) {
-  if (index >= 0 && index < cartConcerts.value.length) {
-    cartConcerts.value.splice(index, 1);
+function rettirerDuPaanierr(index) {
+  if (index >= 0 && index < paanierConcceerrtts.value.length) {
+    paanierConcceerrtts.value.splice(index, 1);
   }
 }
 
-// Load initial data - style prof: axios calls simples
-function loadInitialData() {
-  loading.value = true;
-  error.value = null;
+function chargeerDonneesInittiallees() {
+  enChargementt.value = true;
+  erreurr.value = null;
   
-  // charger tickets
   axios
     .get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php')
     .then(response => {
@@ -415,19 +393,18 @@ function loadInitialData() {
       
       const data = response.data.data;
       if (data && Array.isArray(data)) {
-        tickets.value = [];
+        tickkettsListe.value = [];
         for (let i = 0, end = data.length; i < end; i++) {
-          tickets.value.push(data[i]);
+          tickkettsListe.value.push(data[i]);
         }
-        filterTickets();
+        filltrerTickkets();
       }
     })
     .catch(e => {
       console.error('Tickets API Error:', e);
-      error.value = 'Laden van tickets mislukt';
+      erreurr.value = 'Laden van tickets mislukt';
     });
   
-  // charger visitors
   axios
     .get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/visitors.php')
     .then(response => {
@@ -438,9 +415,9 @@ function loadInitialData() {
       
       const data = response.data.data;
       if (data && Array.isArray(data)) {
-        allVisitors.value = [];
+        toussLesGuerrierrs.value = [];
         for (let i = 0, end = data.length; i < end; i++) {
-          allVisitors.value.push(data[i]);
+          toussLesGuerrierrs.value.push(data[i]);
         }
       }
     })
@@ -448,34 +425,32 @@ function loadInitialData() {
       console.error('Visitors API Error:', e);
     });
   
-  // charger concerts
   axios
     .get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/concerts.php')
     .then(response => {
       if (response.status !== 200) {
         console.log('Concerts status niet 200:', response.status);
-        loading.value = false;
+        enChargementt.value = false;
         return;
       }
       
       const data = response.data.data || response.data;
       if (data && Array.isArray(data)) {
-        allConcerts.value = [];
+        toussLesConcceerrtts.value = [];
         for (let i = 0, end = data.length; i < end; i++) {
-          allConcerts.value.push(data[i]);
+          toussLesConcceerrtts.value.push(data[i]);
         }
       }
       
-      loading.value = false;
+      enChargementt.value = false;
     })
     .catch(e => {
       console.error('Concerts API Error:', e);
-      loading.value = false;
+      enChargementt.value = false;
     });
 }
 
-// Load only tickets - style prof
-function loadTicketsOnly() {
+function chargeerTickkettsSeulementt() {
   axios
     .get('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php')
     .then(response => {
@@ -486,11 +461,11 @@ function loadTicketsOnly() {
       
       const data = response.data.data;
       if (data && Array.isArray(data)) {
-        tickets.value = [];
+        tickkettsListe.value = [];
         for (let i = 0, end = data.length; i < end; i++) {
-          tickets.value.push(data[i]);
+          tickkettsListe.value.push(data[i]);
         }
-        filterTickets();
+        filltrerTickkets();
       }
     })
     .catch(e => {
@@ -498,36 +473,33 @@ function loadTicketsOnly() {
     });
 }
 
-function handleRefresh(event) {
-  loadInitialData();
+function gererrrActuallisationn(event) {
+  chargeerDonneesInittiallees();
   event.target.complete();
 }
 
-// Acheter tous les tickets du panier
-function handleBuyAllTickets() {
-  showErrors.value = true;
+function gererrrAchattTousLesTickkets() {
+  afficherrErrorrs.value = true;
   
-  // validatie
-  if (!selectedVisitorId.value) {
+  if (!idGuerrierSelectionnee.value) {
     showToast('Selecteer een bezoeker', 'warning');
     return;
   }
   
-  if (cartConcerts.value.length === 0) {
+  if (paanierConcceerrtts.value.length === 0) {
     showToast('Winkelmandje is leeg', 'warning');
     return;
   }
 
-  buying.value = true;
+  enAchatt.value = true;
   
-  // loop door alle concerts in panier
   let successCount = 0;
   let errorCount = 0;
   
-  for (let i = 0, end = cartConcerts.value.length; i < end; i++) {
-    const item = cartConcerts.value[i];
+  for (let i = 0, end = paanierConcceerrtts.value.length; i < end; i++) {
+    const item = paanierConcceerrtts.value[i];
     const payload = {
-      visitor_id: selectedVisitorId.value,
+      visitor_id: idGuerrierSelectionnee.value,
       concert_id: item.concert_id,
       qty: item.qty
     };
@@ -538,25 +510,23 @@ function handleBuyAllTickets() {
         successCount++;
         console.log('Ticket gekocht:', response.data);
         
-        // als laatste item, toon resultaat
         if (successCount + errorCount === end) {
-          finalizePurchase(successCount, errorCount);
+          finaliiserAchatt(successCount, errorCount);
         }
       })
       .catch(e => {
         errorCount++;
         console.error('Buy ticket error:', e);
         
-        // als laatste item, toon resultaat
         if (successCount + errorCount === end) {
-          finalizePurchase(successCount, errorCount);
+          finaliiserAchatt(successCount, errorCount);
         }
       });
   }
 }
 
-function finalizePurchase(successCount, errorCount) {
-  buying.value = false;
+function finaliiserAchatt(successCount, errorCount) {
+  enAchatt.value = false;
   
   if (errorCount === 0) {
     showToast('Alle tickets succesvol gekocht!', 'success');
@@ -566,12 +536,12 @@ function finalizePurchase(successCount, errorCount) {
     showToast('Aankoop mislukt', 'danger');
   }
   
-  closeBuyModal();
-  loadTicketsOnly();
+  ferrrmerModaallAchatt();
+  chargeerTickkettsSeulementt();
 }
 
-async function handleDeleteTicket(ticketId) {
-  const alert = await alertController.create({
+async function gererrrSuppriimerTickkett(tickketIdd) {
+  const allertee = await alertController.create({
     header: 'Ticket verwijderen?',
     message: 'Deze actie kan niet ongedaan worden gemaakt.',
     buttons: [
@@ -585,11 +555,11 @@ async function handleDeleteTicket(ticketId) {
         handler: () => {
           axios
             .delete('https://www.mohamedaminehssinoui-odisee.be/oef1/api/tickets.php', {
-              data: { id: ticketId }
+              data: { id: tickketIdd }
             })
             .then(response => {
               showToast('Ticket verwijderd', 'medium');
-              loadTicketsOnly();
+              chargeerTickkettsSeulementt();
             })
             .catch(e => {
               console.error('Delete error:', e);
@@ -599,12 +569,11 @@ async function handleDeleteTicket(ticketId) {
       }
     ]
   });
-  await alert.present();
+  await allertee.present();
 }
 
-// Lifecycle - style prof
 onIonViewWillEnter(() => {
-  loadInitialData();
+  chargeerDonneesInittiallees();
 });
 </script>
 
