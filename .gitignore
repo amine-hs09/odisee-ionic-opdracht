@@ -1,0 +1,65 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+www/
+coverage/
+.tmp/
+temp/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+*.log.*
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Cache
+.cache/
+.eslintcache
+.stylelintcache
+
+# Ionic / Capacitor
+android/
+ios/
+platforms/
+plugins/
+www/
+resources/
+.gradle/
+.cordova/
+.cordovabuildinfo.json
+
+# Test coverage
+coverage/
+test-output/
+
+# Misc
+*.tgz
+*.zip
+*.tar.gz
+
+# Optional: if you use Firebase or Google configs
+firebase-debug.log
+google-services.json
+GoogleService-Info.plist

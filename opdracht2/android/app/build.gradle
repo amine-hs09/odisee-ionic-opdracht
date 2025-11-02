@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "ionic.opdracht2"
+    namespace "be.mohamedaminehssinoui.concertapp"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "ionic.opdracht2"
+        applicationId "be.mohamedaminehssinoui.concertapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

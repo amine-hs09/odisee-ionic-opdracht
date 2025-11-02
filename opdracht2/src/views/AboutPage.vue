@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-back-button default-href="/" color="light"></ion-back-button>
         </ion-buttons>
-        <ion-title class="horde-title">Voor de Horde!</ion-title>
+        <ion-title class="horde-title">mijn opdracht 2</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -14,7 +14,7 @@
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      <!-- Profile Header -->
+     
       <div class="horde-banner">
         <div class="horde-symbol">⚔️</div>
         <ion-avatar class="profile-avatar">
@@ -46,8 +46,9 @@
               <ion-col size="6">
                 <div class="stat-box">
                   <ion-icon :icon="calendar" class="stat-icon" color="success" />
-                  <div class="stat-label">Jaar</div>
-                  <div class="stat-value">2024-2025</div>
+                  <div class="stat-label">Leeftijd</div>
+                  <div class="stat-value">21 jaar</div>
+                  <p style="font-size: 12px; color: #AAA; margin-top: 4px;">14 september 2003</p>
                 </div>
               </ion-col>
             </ion-row>
@@ -67,11 +68,32 @@
                 </div>
               </ion-col>
             </ion-row>
+            <ion-row>
+              <ion-col size="12">
+                <div class="stat-box">
+                  <ion-icon :icon="football" class="stat-icon" color="primary" />
+                  <div class="stat-label">Hobbies & Passies</div>
+                  <div class="stat-value">⚽ Voetbal - FC Barcelona & Chelsea</div>
+                  <p style="font-size: 13px; color: #CCC; margin-top: 8px;">
+                    🚗 Automobiel liefhebber 🎵 Muziek (alle genres)
+                  </p>
+                </div>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12">
+                <div class="stat-box">
+                  <ion-icon :icon="briefcase" class="stat-icon" color="warning" />
+                  <div class="stat-label">Toekomstdroom</div>
+                  <div class="stat-value">🏢 Werken bij Audi of eigen business</div>
+                </div>
+              </ion-col>
+            </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
-      <!-- wat moet ik maken  -->
+      
       <ion-card class="quest-card">
         <ion-card-header>
           <ion-card-title class="section-title">
@@ -135,7 +157,7 @@
         </ion-card-content>
       </ion-card>
 
-      <!-- Abilities Card -->
+   
       <ion-card class="abilities-card">
         <ion-card-header>
           <ion-card-title class="section-title">
@@ -158,36 +180,13 @@
         </ion-card-content>
       </ion-card>
 
-      <!-- Loot Card -->
-      <ion-card class="loot-card">
-        <ion-card-header>
-          <ion-card-title class="section-title">
-            <ion-icon :icon="gift" class="title-icon" />
-            Features
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-list lines="full">
-            <ion-item v-for="feature in features" :key="feature.name">
-              <div class="loot-icon" slot="start" :class="'rarity-' + feature.rarity">
-                <ion-icon :icon="feature.icon" />
-              </div>
-              <ion-label class="ion-text-wrap">
-                <h2 class="loot-name">{{ feature.name }}</h2>
-                <p class="loot-desc">{{ feature.description }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-list>
-        </ion-card-content>
-      </ion-card>
 
-      <!-- Footer -->
       <div class="horde-footer">
         <ion-chip color="danger" class="footer-chip">
           <ion-icon :icon="heart" />
-          <ion-label>Gemaakt met stress</ion-label>
+          <ion-label>Gemaakt met vue en ionic</ion-label>
         </ion-chip>
-        <p class="footer-text">Lok'tar Ogar! Victory or Death!</p>
+        
         <p class="footer-copyright"> 2024-2025 Mohamed Amine Hssinoui 3it</p>
       </div>
     </ion-content>
@@ -204,7 +203,7 @@ import {
 } from '@ionic/vue';
 import {
   code, trophy, school, calendar, rocket, construct, flag, flash, gift, heart,
-  musicalNotes, people, ticket, logoVue, phonePortrait, cloud
+  musicalNotes, people, ticket, logoVue, phonePortrait, cloud, football, briefcase
 } from 'ionicons/icons';
 
 
@@ -223,12 +222,6 @@ const abilities = ref([
   { name: 'Ionic ', description: 'Mobile UI', icon: phonePortrait, color: 'primary',  },
   { name: 'RESTful API', description: 'Backend communicatie', icon: cloud, color: 'warning', },
   { name: 'JavaScript', description: 'Programming language', icon: code, color: 'tertiary', }
-]);
-
-const features = ref([
-  { name: 'Concerten', description: 'Bekijk en beheer alle concerten', icon: musicalNotes, rarity: 'epic' },
-  { name: 'Bezoekers', description: 'Bezoeker informatie bijhouden', icon: people, rarity: 'rare' },
-  { name: 'Tickets', description: 'Koop tickets voor concerten', icon: ticket, rarity: 'legendary' }
 ]);
 
 
@@ -437,35 +430,6 @@ ion-card-subtitle {
 .ability-desc {
   font-size: 14px;
   color: #CCC;
-  margin: 0;
-}
-
-
-.loot-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  font-size: 28px;
-}
-
-.rarity-common { background: #9D9D9D; color: white; }
-.rarity-rare { background: #0070DD; color: white; }
-.rarity-epic { background: #A335EE; color: white; }
-.rarity-legendary { background: #FF8000; color: white; }
-
-.loot-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: #FFD700;
-  margin: 0 0 4px 0;
-}
-
-.loot-desc {
-  font-size: 15px;
-  color: #DDD;
   margin: 0;
 }
 

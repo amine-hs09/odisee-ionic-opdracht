@@ -6,7 +6,7 @@
         <ion-buttons slot="end">
           <ion-button @click="openAddModal" fill="solid">
             <ion-icon slot="start" :icon="add" />
-            Nieuw
+            Nieuw concert
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -17,11 +17,21 @@
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
+      <div class="welcome-card ion-padding">
+        <ion-card>
+          <ion-card-content>
+            <p class="intro-text">
+              Hier kan je concerten aanmaken, wijzigen of verwijderen.
+            </p>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
       <div class="search-container">
         <ion-searchbar 
           v-model="zoekk" 
-          placeholder="Zoek artiest of locatie..." 
-          :debounce="300"
+          placeholder="welke concert zoek je?" 
+          :debounce="301"
           show-clear-button="always"
         />
       </div>
@@ -41,7 +51,7 @@
         </ion-segment-button>
         <ion-segment-button value="past">
           <ion-label>
-            Voorbij
+            Voorbije
             <ion-badge color="medium">{{ pastCnt }}</ion-badge>
           </ion-label>
         </ion-segment-button>
@@ -328,20 +338,21 @@ function isUpcom(c) {
   const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   return eventDate >= currentDate;
 }
-
+// toast functie voor meldingen
 function toasty(message, color) {
   toast.value.open = true;
   toast.value.msg = message;
   toast.value.color = color;
 }
-
+// functie voor filteren
 function doFilter() {
   const term = zoekk.value.trim().toLowerCase();
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
   concertsShownn.value = [];
-  
+  // voor elke concert in myConcerts 
+  // i is de index van het concert
   for (let i = 0, end = myConcerts.value.length; i < end; i++) {
     const c = myConcerts.value[i];
     
@@ -351,7 +362,7 @@ function doFilter() {
       const venue = (c.venue || '').toLowerCase();
       matches = artist.includes(term) || venue.includes(term);
     }
-    
+    // if geen match, volgende concert
     if (!matches) continue;
     
     if (segg.value === 'upcoming') {
@@ -651,6 +662,25 @@ ion-segment-button ion-label {
 ion-badge {
   font-weight: 700;
   font-size: 12px;
+}
+
+.welcome-card {
+  padding-top: 8px;
+}
+
+.welcome-card ion-card {
+  margin: 0;
+  box-shadow: none;
+  border-left: 4px solid var(--ion-color-primary);
+  background: var(--ion-color-primary-tint);
+}
+
+.intro-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ion-color-dark);
+  margin: 0;
+  font-weight: 500;
 }
 
 .concert-card {
